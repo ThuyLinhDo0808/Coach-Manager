@@ -25,10 +25,10 @@ export async function getCourseTemplates(coachId: string): Promise<CourseAdmin[]
   return data as CourseAdmin[];
 }
 
-/** Số lớp đang tuyển theo từng mẫu khoá. */
+/** Số lớp đã mở (trừ lớp huỷ) theo từng mẫu khoá. */
 export async function getClassCounts(coachId: string): Promise<Record<string, number>> {
   const supabase = await serverClient();
-  const { data, error } = await supabase.from("open_classes").select("course_id").eq("coach_id", coachId);
+  const { data, error } = await supabase.from("classes").select("course_id").eq("coach_id", coachId).neq("status", "huy");
   if (error) throw error;
   const out: Record<string, number> = {};
   for (const row of data) if (row.course_id) out[row.course_id] = (out[row.course_id] ?? 0) + 1;

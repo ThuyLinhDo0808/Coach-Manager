@@ -123,7 +123,8 @@ begin
   if v_uid is null then
     return 0;
   end if;
-  select lower(u.email) into v_email from auth.users u where u.id = v_uid;
+  -- Chỉ tin email đã được xác nhận (email_confirmed_at). Nếu chưa xác nhận thì không nhận lời mời.
+  select lower(u.email) into v_email from auth.users u where u.id = v_uid and u.email_confirmed_at is not null;
   if v_email is null or v_email = '' then
     return 0;
   end if;

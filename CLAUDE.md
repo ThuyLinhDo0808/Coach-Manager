@@ -29,7 +29,9 @@ Web riêng của Coach Trung Muối: trang công khai cho học viên và khu qu
 
 ## Cấu trúc
 - `src/app/(public)/(tabs)/` — các tab trang công khai (dùng chung `PublicShell`); `src/app/(public)/dang-ky/` — form nhu cầu.
-- `src/app/quan-ly/` — khu quản lý (cần đăng nhập; `src/proxy.ts` chặn sớm, RLS quyết định quyền). Mục chưa làm rơi vào `[...muc]`.
+- `src/app/quan-ly/` — khu quản lý (cần đăng nhập; `src/proxy.ts` chặn sớm, RLS quyết định quyền). Mục chưa có route riêng rơi vào `[...muc]`. Server action dùng chung trong `src/app/quan-ly/_actions/`.
+- Cài đặt / Nội dung chỉ dành cho owner (`requireOwner()` trong `src/lib/owner.ts`); Thu chi / Thống kê kiểm tra `session.role === "owner"`.
+- Dữ liệu theo phiên: `src/lib/teaching-data.ts` (lớp, buổi, học viên), `src/lib/money-data.ts` (sổ, offer), `src/lib/settings-data.ts`. Giờ luôn theo giờ Việt Nam qua `src/lib/time.ts`.
 - `src/lib/data.ts` đọc nội dung công khai; `src/lib/admin-data.ts` đọc theo phiên đăng nhập; `src/lib/lead-schema.ts` kiểm tra dữ liệu form.
 - Lộ trình các đợt: xem README.
 - Không chạy được Supabase cục bộ trong phiên cloud; kiểm tra SQL bằng Postgres có sẵn (giả lập schema `auth`), giao diện quản lý bằng trang tạm với dữ liệu giả (không commit).
