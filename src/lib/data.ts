@@ -3,7 +3,7 @@ import { cache } from "react";
 import { DEFAULT_COACH_SLUG, hasSupabase } from "@/lib/env";
 import { publicClient } from "@/lib/supabase/public";
 import * as sample from "@/lib/sample-data";
-import type { Coach, Course, OpenClass, Venue, Video, VideoGroup } from "@/lib/types";
+import type { Coach, Course, OpenClass, Post, Review, Venue, Video, VideoGroup } from "@/lib/types";
 
 /** Coach của trang đang xem. Sau này đổi theo tên miền; hiện dùng coach mặc định. */
 export const getCoach = cache(async (): Promise<Coach | null> => {
@@ -80,7 +80,7 @@ export const getVideos = cache(async (): Promise<Video[]> => {
   if (!hasSupabase) return sample.sampleVideos;
   const { data, error } = await publicClient()
     .from("videos")
-    .select("id, group_id, title, youtube_id, description, level, published_on")
+    .select("id, group_id, title, youtube_id, description, level, published_on, duration_text, course_id")
     .eq("coach_id", await requireCoachId())
     .eq("visibility", "public")
     .order("sort")
@@ -88,3 +88,37 @@ export const getVideos = cache(async (): Promise<Video[]> => {
   if (error) throw error;
   return data as Video[];
 });
+
+export const getPosts = cache(async (): Promise<Post[]> => {
+  if (!hasSupabase) return sample.samplePosts;
+  const { data, error } = await publicClient()
+    .from("posts")
+    .select("id, slug, title, excerpt, topic, cover_url, youtube_id, body, read_minutes, is_featured, published_at, course_id")
+    .eq("coach_id", await requireCoachId())
+    .eq("status", "da-dang")
+    .order("published_at", { ascending: false });
+  if (error) throw error;
+  return data as Post[];
+});
+
+export async function getPost(slug: string): Promise<Post | null> {
+  return (await getPosts()).find((p) => p.slug === slug) ?? null;
+}
+
+export const getReviews = cache(async (): Promise<Review[]> => {
+  if (!hasSupabase) return [];
+  const { data, error } = await publicClient()
+    .from("reviews")
+    .select("id, author_name, rating, body, course_id, is_pinned, created_at")
+    .eq("coach_id", await requireCoachId())
+    .eq("is_public", true)
+    .order("is_pinned", { ascending: false })
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  return data as Review[];
+});
+
+export function ratingSummary(reviews: Review[]): { average: number; count: number } | null {
+  if (!reviews.length) return null;
+  return { average: reviews.reduce((s, r) => s + r.rating, 0) / reviews.length, count: reviews.length };
+}

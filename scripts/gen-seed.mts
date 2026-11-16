@@ -40,6 +40,7 @@ const sql = [
   insert("open_classes", withCoach(s.sampleOpenClasses, (_, i) => ({ sort: i }))),
   insert("video_groups", withCoach(s.sampleVideoGroups, (_, i) => ({ sort: i }))),
   insert("videos", withCoach(s.sampleVideos, (_, i) => ({ sort: i }))),
+  insert("posts", withCoach(s.samplePosts, () => ({ status: "da-dang" }))),
 ].join("\n");
 
 writeFileSync(new URL("../supabase/seed.sql", import.meta.url), sql);

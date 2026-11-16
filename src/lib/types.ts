@@ -35,6 +35,7 @@ export type Coach = {
   stat_students: number;
   stat_courses: number;
   stat_rating: number | null;
+  stat_years: number;
   teaching_style: string[];
   strengths: { title: string; text: string }[];
   experience: { year: string; title: string; detail?: string }[];
@@ -95,6 +96,8 @@ export type Video = {
   description: string | null;
   level: string | null;
   published_on: string | null;
+  duration_text: string | null;
+  course_id: string | null;
 };
 
 export type LeadStatus =
@@ -115,3 +118,93 @@ export const LEAD_STATUSES: { value: LeadStatus; label: string }[] = [
   { value: "danh-sach-cho", label: "Danh sách chờ" },
   { value: "khong-thanh", label: "Không thành" },
 ];
+
+export type LeadOrigin = "form" | "facebook" | "zalo" | "tiktok" | "gioi-thieu" | "truc-tiep" | "khac";
+export const LEAD_ORIGINS: { value: LeadOrigin; label: string }[] = [
+  { value: "form", label: "Form trên web" },
+  { value: "facebook", label: "Facebook" },
+  { value: "zalo", label: "Zalo" },
+  { value: "tiktok", label: "TikTok" },
+  { value: "gioi-thieu", label: "Bạn giới thiệu" },
+  { value: "truc-tiep", label: "Gặp trực tiếp" },
+  { value: "khac", label: "Khác" },
+];
+
+export type Lead = {
+  id: string;
+  coach_id: string;
+  status: LeadStatus;
+  full_name: string;
+  gender: "nam" | "nu" | "khac" | null;
+  birth_year: number | null;
+  phone: string;
+  for_whom: string | null;
+  played_sports: boolean | null;
+  sports: string[];
+  pickleball_duration: string | null;
+  dupr: string | null;
+  self_level: string | null;
+  course_id: string | null;
+  interests: string[];
+  goal: string | null;
+  formats: string[];
+  styles: string[];
+  area: string | null;
+  availability: Record<string, string[]>;
+  budget: string | null;
+  source: string | null;
+  note: string | null;
+  assigned_to: string | null;
+  lost_reason: string | null;
+  contacted_at: string | null;
+  origin: LeadOrigin;
+  remind_on: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type LeadNoteKind = "ghi-chu" | "goi" | "nhan" | "hen" | "trang-thai" | "he-thong";
+export type LeadNote = {
+  id: string;
+  lead_id: string;
+  author_id: string | null;
+  body: string;
+  kind: LeadNoteKind;
+  created_at: string;
+};
+
+export type Member = { user_id: string; role: "owner" | "sale"; display_name: string | null };
+
+export type PostTopic = "luat" | "ky-thuat" | "chien-thuat" | "the-luc" | "dung-cu";
+export const POST_TOPICS: { value: PostTopic; label: string }[] = [
+  { value: "ky-thuat", label: "Kỹ thuật" },
+  { value: "luat", label: "Luật" },
+  { value: "chien-thuat", label: "Chiến thuật" },
+  { value: "the-luc", label: "Thể lực" },
+  { value: "dung-cu", label: "Dụng cụ" },
+];
+
+export type Post = {
+  id: string;
+  slug: string;
+  title: string;
+  excerpt: string | null;
+  topic: PostTopic;
+  cover_url: string | null;
+  youtube_id: string | null;
+  body: string;
+  read_minutes: number;
+  is_featured: boolean;
+  published_at: string | null;
+  course_id: string | null;
+};
+
+export type Review = {
+  id: string;
+  author_name: string;
+  rating: number;
+  body: string | null;
+  course_id: string | null;
+  is_pinned: boolean;
+  created_at: string;
+};

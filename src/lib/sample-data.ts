@@ -1,4 +1,4 @@
-import type { Coach, Course, OpenClass, Venue, Video, VideoGroup } from "./types";
+import type { Coach, Course, OpenClass, Post, Venue, Video, VideoGroup } from "./types";
 
 /**
  * Nội dung MẪU, dùng khi chưa nối Supabase (chạy máy, CI) và làm dữ liệu khởi tạo.
@@ -21,7 +21,8 @@ export const sampleCoach: Coach = {
   stat_hours: 1200,
   stat_students: 180,
   stat_courses: 45,
-  stat_rating: 4.9,
+  stat_rating: null,
+  stat_years: 3,
   teaching_style: [
     "Sửa từng động tác qua video quay tại sân",
     "Mỗi buổi một mục tiêu rõ ràng, có bài tập về nhà",
@@ -234,5 +235,40 @@ export const sampleVideos: Video[] = plannedTitles.flatMap(([groupId, titles], g
     description: null,
     level: g === 0 ? "Người mới" : null,
     published_on: null,
+    duration_text: null,
+    course_id: null,
   })),
 );
+
+/** Bài viết mẫu — Trung thay bằng bài thật. */
+export const samplePosts: Post[] = [
+  {
+    id: "00000000-0000-0000-0000-0000000000f1",
+    slug: "luat-vung-bep-cho-nguoi-moi",
+    title: "Luật vùng bếp (kitchen) cho người mới",
+    excerpt: "Khi nào được bước vào vùng bếp, volley thế nào là phạm luật. Bài mẫu, nội dung sẽ được cập nhật.",
+    topic: "luat",
+    cover_url: null,
+    youtube_id: null,
+    body:
+      "## Vùng bếp là gì?\n\nVùng bếp là khu vực 2,13 m tính từ lưới về mỗi bên sân. Đây là bài viết mẫu để xem bố cục trang.\n\n## Ba điều cần nhớ\n\n- Không volley khi đang đứng trong vùng bếp hoặc chạm vạch bếp.\n- Được bước vào vùng bếp để đánh bóng đã nảy.\n- Sau khi volley, đà người không được đưa bạn vào vùng bếp.\n\nNội dung chi tiết sẽ do Coach Trung Muối viết.",
+    read_minutes: 4,
+    is_featured: true,
+    published_at: "2026-11-16T03:00:00Z",
+    course_id: "00000000-0000-0000-0000-0000000000c1",
+  },
+  {
+    id: "00000000-0000-0000-0000-0000000000f2",
+    slug: "chon-vot-dau-tien",
+    title: "Chọn vợt đầu tiên cho người mới",
+    excerpt: "Độ nặng, bề mặt, cán vợt: nên để ý gì khi mua cây vợt đầu tiên. Bài mẫu.",
+    topic: "dung-cu",
+    cover_url: null,
+    youtube_id: null,
+    body: "Bài viết mẫu để xem bố cục. Nội dung chi tiết sẽ do Coach Trung Muối viết.",
+    read_minutes: 3,
+    is_featured: false,
+    published_at: "2026-11-15T03:00:00Z",
+    course_id: null,
+  },
+];
