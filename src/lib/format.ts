@@ -19,7 +19,7 @@ export function ageFromBirthYear(birthYear: number | null, now = new Date()): nu
 
 /** "Coach Trung Muối" → "TM" */
 export function initials(name: string): string {
-  const words = name.replace(/^coach\s+/i, "").trim().split(/\s+/).filter(Boolean);
+  const words = name.replace(/\(.*?\)/g, "").replace(/^coach\s+/i, "").trim().split(/\s+/).filter(Boolean);
   return words.slice(0, 2).map((w) => w[0]!.toUpperCase()).join("") || "?";
 }
 
