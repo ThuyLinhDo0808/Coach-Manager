@@ -23,3 +23,11 @@ npm run dev
 Migration nằm trong `supabase/migrations/`. Biến môi trường trên Vercel: xem `.env.example`.
 
 Quy ước dự án: [CLAUDE.md](CLAUDE.md).
+
+### Chạy migration bằng tay (SQL Editor của Supabase)
+
+Chạy theo thứ tự, mỗi file một lần:
+
+1. `supabase/migrations/20261116000000_init.sql` — bảng, RLS, hàm `submit_lead`
+2. `supabase/migrations/20261116000100_grants.sql` — quyền cho API
+3. `supabase/seed.sql` — nội dung mẫu (chạy lại nhiều lần cũng không sao). Sinh lại bằng `npm run seed:gen`.

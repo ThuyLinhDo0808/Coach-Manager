@@ -1,4 +1,4 @@
-import type { Coach, Course, OpenClass, Venue, Video, VideoGroup } from "@/lib/types";
+import type { Coach, Course, OpenClass, Venue, Video, VideoGroup } from "./types";
 
 /**
  * Nội dung MẪU, dùng khi chưa nối Supabase (chạy máy, CI) và làm dữ liệu khởi tạo.
