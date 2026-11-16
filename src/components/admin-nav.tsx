@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Icon, Tile, type IconName } from "@/components/icon";
+import type { MemberRole } from "@/lib/types";
 
 export const MENU: { href: string; icon: IconName; label: string; short?: string; color: string; ownerOnly?: boolean }[] = [
   { href: "/quan-ly", icon: "home", label: "Tổng quan", color: "blue" },
@@ -18,7 +19,7 @@ export const MENU: { href: string; icon: IconName; label: string; short?: string
 
 const isOn = (pathname: string, href: string) => (href === "/quan-ly" ? pathname === href : pathname.startsWith(href));
 
-export function AdminMenu({ role, newLeads }: { role: "owner" | "sale"; newLeads: number }) {
+export function AdminMenu({ role, newLeads }: { role: MemberRole; newLeads: number }) {
   const pathname = usePathname();
   return (
     <nav aria-label="Menu quản lý">

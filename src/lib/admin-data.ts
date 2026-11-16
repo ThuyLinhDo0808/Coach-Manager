@@ -27,7 +27,7 @@ export async function getLeadNotes(leadId: string): Promise<LeadNote[]> {
 
 export async function getMembers(coachId: string): Promise<Member[]> {
   const supabase = await serverClient();
-  const { data, error } = await supabase.from("coach_members").select("user_id, role, display_name").eq("coach_id", coachId);
+  const { data, error } = await supabase.from("coach_members").select("*").eq("coach_id", coachId);
   if (error) throw error;
   return data as Member[];
 }

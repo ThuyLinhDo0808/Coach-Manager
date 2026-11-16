@@ -3,8 +3,11 @@ import { Icon } from "@/components/icon";
 import { LostReasonForm } from "@/components/lead-status";
 import { availabilityText, forWhomLabel, genderLabel } from "@/lib/labels";
 import { ageText, isOverdue, maskPhone } from "@/lib/leads";
-import { LEAD_ORIGINS, LEAD_STATUSES, type Lead, type LeadNote, type Member } from "@/lib/types";
+import { LEAD_ORIGINS, LEAD_STATUSES, ROLE_LABEL, type Lead, type LeadNote, type Member } from "@/lib/types";
 import { addLeadNote, assignLead, changeStatus } from "@/app/quan-ly/nhu-cau/actions";
+import { addSession, closeLead } from "@/app/quan-ly/_actions/teaching";
+import { ActionForm, Submit } from "@/components/action-form";
+import { vnDate } from "@/lib/time";
 
 const KIND_LABEL: Record<string, string> = { "ghi-chu": "Ghi chú", goi: "Gọi", nhan: "Nhắn", hen: "Hẹn", "trang-thai": "Trạng thái", "he-thong": "Hệ thống" };
 const when = (iso: string) =>
@@ -20,12 +23,14 @@ function Row({ label, value }: { label: string; value: React.ReactNode }) {
   );
 }
 
-export function LeadDetail({ lead, notes, members, courseTitle, closeHref }: { lead: Lead; notes: LeadNote[]; members: Member[]; courseTitle?: string; closeHref: string }) {
+type Choice = { id: string; label: string; price?: number | null };
+
+export function LeadDetail({ lead, notes, members, courseTitle, closeHref, classes, venues, studentId, offers }: { lead: Lead; notes: LeadNote[]; members: Member[]; courseTitle?: string; closeHref: string; classes: Choice[]; venues: Choice[]; studentId: string | null; offers: React.ReactNode }) {
   const status = LEAD_STATUSES.find((s) => s.value === lead.status)!;
   const overdue = isOverdue(lead);
   const memberName = (id: string | null) => {
     const m = members.find((x) => x.user_id === id);
-    return m ? (m.display_name ?? (m.role === "owner" ? "Coach" : "Sale")) : null;
+    return m ? (m.display_name ?? (ROLE_LABEL[m.role])) : null;
   };
   const sportLine = lead.played_sports == null ? null : lead.played_sports ? `Đã chơi ${lead.sports.join(", ").toLowerCase() || "thể thao"}` : "Chưa chơi môn nào";
 
@@ -116,13 +121,53 @@ export function LeadDetail({ lead, notes, members, courseTitle, closeHref }: { l
             <option value="">Chưa giao ai</option>
             {members.map((m) => (
               <option key={m.user_id} value={m.user_id}>
-                {m.display_name ?? (m.role === "owner" ? "Coach" : "Sale")} · {m.role === "owner" ? "Coach" : "Sale"}
+                {m.display_name ?? (ROLE_LABEL[m.role])} · {ROLE_LABEL[m.role]}
               </option>
             ))}
           </select>
           <button className="btn ghost">Giao</button>
         </form>
-        <p className="mt-4 text-xs text-faint">Gửi offer và link thanh toán VietQR sẽ có cùng phần Thu chi.</p>
+        {offers}
+        {lead.status !== "da-chot" && (
+          <>
+            <h2 className="h2 mt-5" style={{ fontSize: 15 }}>Hẹn học thử</h2>
+            <ActionForm action={addSession} className="grid gap-2">
+              <input type="hidden" name="lead_id" value={lead.id} />
+              <input type="hidden" name="title" value={lead.full_name} />
+              <input type="hidden" name="minutes" value="60" />
+              <div className="grid grid-cols-2 gap-2">
+                <input type="date" name="date" required className="input" style={{ height: 40 }} defaultValue={vnDate()} aria-label="Ngày học thử" />
+                <input type="time" name="time" required className="input" style={{ height: 40 }} defaultValue="18:00" aria-label="Giờ học thử" />
+              </div>
+              <div className="flex gap-2">
+                <select name="venue_id" className="input" style={{ height: 40 }} aria-label="Sân học thử" defaultValue="">
+                  <option value="">Chưa chọn sân</option>
+                  {venues.map((v) => <option key={v.id} value={v.id}>{v.label}</option>)}
+                </select>
+                <Submit className="btn ghost" pendingText="Đang lưu…">Đặt lịch</Submit>
+              </div>
+            </ActionForm>
+
+            <h2 className="h2 mt-5" style={{ fontSize: 15 }}>Chốt ngay (đã nhận tiền mặt)</h2>
+            <form action={closeLead} className="grid gap-2">
+              <input type="hidden" name="id" value={lead.id} />
+              <select name="class_id" className="input" style={{ height: 40 }} aria-label="Lớp" defaultValue="">
+                <option value="">Chưa xếp lớp (chỉ tạo học viên)</option>
+                {classes.map((c) => <option key={c.id} value={c.id}>{c.label}</option>)}
+              </select>
+              <div className="flex gap-2">
+                <input name="price" inputMode="numeric" className="input num" style={{ height: 40 }} placeholder="Học phí thoả thuận (đ)" aria-label="Học phí thoả thuận" />
+                <button className="btn primary">Chốt</button>
+              </div>
+            </form>
+            <p className="mt-1.5 text-xs text-faint">Tạo hồ sơ học viên và ghi danh vào lớp đã chọn. Tiền mặt thì ghi thêm ở Thu chi.</p>
+          </>
+        )}
+        {studentId && (
+          <Link href={`/quan-ly/hoc-vien/${studentId}`} className="btn sm navy mt-4">
+            Mở hồ sơ học viên
+          </Link>
+        )}
       </div>
     </section>
   );

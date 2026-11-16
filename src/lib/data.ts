@@ -61,15 +61,10 @@ export const getVenues = cache(async (): Promise<Venue[]> => {
   return data as Venue[];
 });
 
+/** Lớp đang tuyển; số chỗ còn lại tính từ đăng ký thật (hàm list_open_classes). */
 export const getOpenClasses = cache(async (): Promise<OpenClass[]> => {
   if (!hasSupabase) return sample.sampleOpenClasses;
-  const { data, error } = await publicClient()
-    .from("open_classes")
-    .select("*")
-    .eq("coach_id", await requireCoachId())
-    .eq("is_public", true)
-    .order("sort")
-    .order("start_date");
+  const { data, error } = await publicClient().rpc("list_open_classes", { p_coach: await requireCoachId() });
   if (error) return optional("open_classes", error);
   return data as OpenClass[];
 });
@@ -130,4 +125,28 @@ export const getReviews = cache(async (): Promise<Review[]> => {
 export function ratingSummary(reviews: Review[]): { average: number; count: number } | null {
   if (!reviews.length) return null;
   return { average: reviews.reduce((s, r) => s + r.rating, 0) / reviews.length, count: reviews.length };
+}
+
+export type PublicFreeSlot = { id: string; weekday: number; start_time: string; end_time: string; venue_id: string | null };
+
+/** Giờ rảnh lặp hằng tuần mà coach cho học viên thấy. */
+export const getFreeSlots = cache(async (): Promise<PublicFreeSlot[]> => {
+  if (!hasSupabase) return [];
+  const { data, error } = await publicClient()
+    .from("free_slots")
+    .select("id, weekday, start_time, end_time, venue_id")
+    .eq("coach_id", await requireCoachId())
+    .eq("is_public", true)
+    .order("weekday")
+    .order("start_time");
+  if (error) return optional("free_slots", error);
+  return data as PublicFreeSlot[];
+});
+
+/** Khung giờ đã có buổi dạy trong khoảng ngày (không kèm tên lớp hay học viên). */
+export async function getBusyTimes(fromIso: string, toIso: string): Promise<{ starts_at: string; ends_at: string }[]> {
+  if (!hasSupabase) return [];
+  const { data, error } = await publicClient().rpc("list_busy_times", { p_coach: await requireCoachId(), p_from: fromIso, p_to: toIso });
+  if (error) return optional("busy_times", error);
+  return data as { starts_at: string; ends_at: string }[];
 }

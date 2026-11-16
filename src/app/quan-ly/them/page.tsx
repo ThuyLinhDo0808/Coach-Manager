@@ -3,6 +3,7 @@ import { MENU } from "@/components/admin-nav";
 import { PageHead } from "@/components/admin-shell";
 import { Icon, Tile } from "@/components/icon";
 import { requireSession } from "@/lib/auth";
+import { ROLE_LABEL } from "@/lib/types";
 import { signOut } from "../../dang-nhap/actions";
 
 export const metadata = { title: "Thêm" };
@@ -12,7 +13,7 @@ export default async function ThemPage() {
   const items = MENU.filter((m) => session.role === "owner" || !m.ownerOnly);
   return (
     <>
-      <PageHead icon="more" color="slate" title="Thêm" sub={`${session.memberName ?? session.email} · ${session.role === "owner" ? "Coach" : "Sale"}`} />
+      <PageHead icon="more" color="slate" title="Thêm" sub={`${session.memberName ?? session.email} · ${ROLE_LABEL[session.role]}`} />
       <div className="grid gap-4 md:grid-cols-2">
         <div className="card" style={{ padding: 10 }}>
           {items.map((m) => (

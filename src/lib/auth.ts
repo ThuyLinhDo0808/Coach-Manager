@@ -3,12 +3,12 @@ import { redirect } from "next/navigation";
 import { cache } from "react";
 import { hasSupabase } from "@/lib/env";
 import { serverClient } from "@/lib/supabase/server";
-import type { Coach } from "@/lib/types";
+import type { Coach, MemberRole } from "@/lib/types";
 
 export type Session = {
   userId: string;
   email: string;
-  role: "owner" | "sale";
+  role: MemberRole;
   memberName: string | null;
   coach: Coach;
 };
@@ -31,7 +31,7 @@ export const requireSession = cache(async (): Promise<Session> => {
   return {
     userId: auth.user.id,
     email: auth.user.email ?? "",
-    role: member.role as "owner" | "sale",
+    role: member.role as MemberRole,
     memberName: member.display_name,
     coach: member.coaches as unknown as Coach,
   };
