@@ -20,6 +20,12 @@ export default async function DangNhapPage({ searchParams }: { searchParams: Pro
           </div>
         )}
         <LoginForm />
+        <p className="mt-4 text-center text-[13px] text-muted">
+          Được mời vào đội?{" "}
+          <Link href="/tham-gia" className="font-semibold text-ink underline underline-offset-2">
+            Tạo mật khẩu
+          </Link>
+        </p>
       </div>
     </main>
   );
