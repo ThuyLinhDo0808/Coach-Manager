@@ -6,6 +6,7 @@ import { LeadDetail } from "@/components/lead-detail";
 import { NewLeadForm } from "@/components/new-lead-form";
 import { getAdminCourses, getLeadNotes, getLeads, getMembers } from "@/lib/admin-data";
 import { requireSession } from "@/lib/auth";
+import { teachingDb } from "@/lib/teaching-data";
 import { BOARD_STATUSES, closeRate, countByStatus, isOverdue, OPEN_STATUSES } from "@/lib/leads";
 import { LEAD_STATUSES, ROLE_LABEL, type LeadStatus } from "@/lib/types";
 
@@ -27,6 +28,8 @@ export default async function NhuCauPage({ searchParams }: { searchParams: Promi
   const rate = closeRate(leads);
   const selected = sp.id ? (allLeads.find((l) => l.id === sp.id) ?? null) : null;
   const notes = selected ? await getLeadNotes(selected.id) : [];
+  const t = await teachingDb(session.coach.id);
+  const [classes, venues, students] = selected ? await Promise.all([t.classes(), t.venues(), t.students()]) : [[], [], []];
 
   const mobileStatus = (LEAD_STATUSES.some((s) => s.value === sp.cot) ? sp.cot : "moi") as LeadStatus;
   const courseTitle = (id: string | null) => courses.find((c) => c.id === id)?.title;
@@ -111,7 +114,16 @@ export default async function NhuCauPage({ searchParams }: { searchParams: Promi
       )}
 
       {selected && (
-        <LeadDetail lead={selected} notes={notes} members={members} courseTitle={courseTitle(selected.course_id)} closeHref={href({ id: undefined })} />
+        <LeadDetail
+          lead={selected}
+          notes={notes}
+          members={members}
+          courseTitle={courseTitle(selected.course_id)}
+          closeHref={href({ id: undefined })}
+          classes={classes.filter((c) => c.status === "sap-dien-ra" || c.status === "dang-dien-ra").map((c) => ({ id: c.id, label: c.title }))}
+          venues={venues.map((v) => ({ id: v.id, label: v.name }))}
+          studentId={students.find((x) => x.lead_id === selected.id)?.id ?? null}
+        />
       )}
       {allLeads.length === 0 && !sp.them && (
         <div className="card mt-3 text-muted">

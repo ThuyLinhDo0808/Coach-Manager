@@ -18,8 +18,8 @@ insert into public.courses (id, slug, title, kind, cover_url, summary, audience,
   ('00000000-0000-0000-0000-0000000000c3', 'kem-1-1', 'Kèm 1-1 theo mục tiêu', 'kem-1-1', null, 'Lộ trình riêng theo mục tiêu của bạn, giờ linh hoạt.', 'Mọi trình độ', 'Theo mục tiêu riêng: lên DUPR, thi đấu, sửa cú', null, 60, 1, 'Theo lịch hẹn', null, null, 500000, 'Gói 10 buổi có giá riêng', '[]'::jsonb, array['Đổi lịch nếu báo trước 12 giờ']::text[], array['Lộ trình riêng và nhận xét sau mỗi buổi']::text[], '00000000-0000-0000-0000-000000000001', 2, true)
 on conflict (id) do nothing;
 
-insert into public.open_classes (id, course_id, title, schedule_text, venue_id, start_date, seats_total, seats_left, coach_id, sort) values
-  ('00000000-0000-0000-0000-0000000000d1', '00000000-0000-0000-0000-0000000000c1', 'Cơ bản K12 — tối T3, T5', 'T3, T5 18:00–19:30', '00000000-0000-0000-0000-0000000000a1', '2026-12-01', 4, 2, '00000000-0000-0000-0000-000000000001', 0)
+insert into public.classes (id, course_id, title, schedule_text, venue_id, start_date, coach_id, max_students, is_recruiting) values
+  ('00000000-0000-0000-0000-0000000000d1', '00000000-0000-0000-0000-0000000000c1', 'Cơ bản K12 — tối T3, T5', 'T3, T5 18:00–19:30', '00000000-0000-0000-0000-0000000000a1', '2026-12-01', '00000000-0000-0000-0000-000000000001', 4, true)
 on conflict (id) do nothing;
 
 insert into public.video_groups (id, slug, name, coach_id, sort) values

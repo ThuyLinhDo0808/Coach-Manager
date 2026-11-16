@@ -2,19 +2,57 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Icon } from "@/components/icon";
 import { Thumb } from "@/components/thumb";
-import { getCourses, getOpenClasses, getVenues } from "@/lib/data";
+import { CalendarLegend, sessionEvent, WeekCalendar, type CalEvent } from "@/components/week-calendar";
+import { getBusyTimes, getCourses, getFreeSlots, getOpenClasses, getVenues } from "@/lib/data";
+import { addDays, dmy, isDate, vnDate, vnIso, weekdayOf, weekStart } from "@/lib/time";
 
 export const metadata: Metadata = { title: "Lịch & sân" };
 export const revalidate = 60;
 
 const fmtDate = (d: string) => new Date(d + "T00:00:00").toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit" });
 
-export default async function LichSanPage() {
-  const [classes, venues, courses] = await Promise.all([getOpenClasses(), getVenues(), getCourses()]);
+const hourOf = (t: string) => Number(t.slice(0, 2)) + Number(t.slice(3, 5)) / 60;
+
+export default async function LichSanPage({ searchParams }: { searchParams: Promise<{ tuan?: string; ngay?: string }> }) {
+  const sp = await searchParams;
+  const today = vnDate();
+  const thisWeek = weekStart(today);
+  // Chỉ cho xem tuần này và 3 tuần tới.
+  const asked = isDate(sp.tuan) ? weekStart(sp.tuan) : thisWeek;
+  const ws = asked < thisWeek || asked > addDays(thisWeek, 21) ? thisWeek : asked;
+  const [classes, venues, courses, slots, busy] = await Promise.all([
+    getOpenClasses(), getVenues(), getCourses(), getFreeSlots(), getBusyTimes(vnIso(ws, "00:00"), vnIso(addDays(ws, 7), "00:00")),
+  ]);
   const venueName = (id: string | null) => venues.find((v) => v.id === id)?.name;
+  const events: CalEvent[] = [
+    ...slots
+      .filter((s) => addDays(ws, s.weekday - 1) >= today)
+      .map((s): CalEvent => ({
+        id: s.id, day: s.weekday - 1, start: hourOf(s.start_time), end: hourOf(s.end_time),
+        startText: s.start_time.slice(0, 5), endText: s.end_time.slice(0, 5),
+        title: "Còn trống", place: venueName(s.venue_id) ?? "Bấm để đăng ký", kind: "f", href: "/dang-ky",
+      })),
+    ...busy.map((b, i): CalEvent => ({ ...sessionEvent({ id: String(i), ...b }, ws), title: "Đã kín", kind: "b" })),
+  ];
+  const selectedDay = sp.ngay != null && /^[0-6]$/.test(sp.ngay) ? Number(sp.ngay) : ws === thisWeek ? weekdayOf(today) - 1 : 0;
+  const weekHref = (w: string, day?: number) => `/lich-san?tuan=${w}${day != null ? `&ngay=${day}` : ""}`;
 
   return (
     <div className="grid gap-4">
+      {(slots.length > 0 || busy.length > 0) && (
+        <section>
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-2 px-1">
+            <h2 className="h2 mb-0">Lịch tuần {dmy(ws)} – {dmy(addDays(ws, 6))}</h2>
+            <div className="flex gap-2">
+              {ws > thisWeek && <Link href={weekHref(addDays(ws, -7))} scroll={false} className="btn sm ghost bg-white">‹ Tuần trước</Link>}
+              {ws < addDays(thisWeek, 21) && <Link href={weekHref(addDays(ws, 7))} scroll={false} className="btn sm ghost bg-white">Tuần sau ›</Link>}
+            </div>
+          </div>
+          <WeekCalendar weekStartDate={ws} events={events} today={today} selectedDay={selectedDay} dayHref={(d) => weekHref(ws, d)} />
+          <CalendarLegend items={["f", "b"]} />
+        </section>
+      )}
+
       <section className="card">
         <h2 className="h2">Lớp đang tuyển</h2>
         {classes.length === 0 ? (
