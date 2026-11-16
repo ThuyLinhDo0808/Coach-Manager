@@ -20,12 +20,14 @@ export const requireSession = cache(async (): Promise<Session> => {
   const { data: auth } = await supabase.auth.getUser();
   if (!auth.user) redirect("/dang-nhap");
 
-  const { data: member } = await supabase
-    .from("coach_members")
-    .select("role, display_name, coaches(*)")
-    .eq("user_id", auth.user.id)
-    .limit(1)
-    .maybeSingle();
+  const readMember = () =>
+    supabase.from("coach_members").select("role, display_name, coaches(*)").eq("user_id", auth.user.id).limit(1).maybeSingle();
+  let { data: member } = await readMember();
+  if (!member?.coaches) {
+    // Chưa ở đội nào: có thể vừa được mời. Nhận lời mời theo email (hàm accept_invite) rồi đọc lại một lần.
+    const { data: accepted } = await supabase.rpc("accept_invite");
+    if (accepted) ({ data: member } = await readMember());
+  }
   if (!member?.coaches) redirect("/dang-nhap?loi=chua-co-quyen");
 
   return {
