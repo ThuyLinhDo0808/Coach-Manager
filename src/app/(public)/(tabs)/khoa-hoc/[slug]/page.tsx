@@ -26,8 +26,8 @@ export default async function ChiTietKhoaPage({ params }: Props) {
     getVenues(),
     getOpenClasses(),
   ]);
-  if (!course) notFound();
-  const zalo = zaloHref(coach!.contacts);
+  if (!course || !coach) notFound();
+  const zalo = zaloHref(coach.contacts);
   const venue = venues.find((v) => v.id === course.venue_id);
   const price = priceText(course);
   const openClasses = classes.filter((c) => c.course_id === course.id && (c.seats_left ?? 1) > 0);

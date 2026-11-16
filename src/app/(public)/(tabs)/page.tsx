@@ -1,3 +1,4 @@
+import { notFound } from "next/navigation";
 import { contactLinks } from "@/components/contact-links";
 import { Icon } from "@/components/icon";
 import { getCoach } from "@/lib/data";
@@ -5,7 +6,8 @@ import { getCoach } from "@/lib/data";
 export const revalidate = 60;
 
 export default async function GioiThieuPage() {
-  const coach = (await getCoach())!;
+  const coach = await getCoach();
+  if (!coach) notFound();
   const links = contactLinks(coach.contacts);
   const phoneHidden = coach.contacts.phone && !coach.contacts.show_phone;
 

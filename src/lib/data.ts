@@ -13,14 +13,23 @@ export const getCoach = cache(async (): Promise<Coach | null> => {
     .select("*")
     .eq("slug", DEFAULT_COACH_SLUG)
     .maybeSingle();
-  if (error) throw error;
+  if (error) {
+    console.error("Không đọc được coach", error);
+    return null;
+  }
   return data as Coach | null;
 });
 
+// Trang công khai không được sập vì database: thiếu coach hay lỗi đọc thì coi như chưa có nội dung
+// (layout sẽ trả 404 khi không có coach). Lỗi được ghi ra log để tìm nguyên nhân.
+const NO_COACH = "00000000-0000-0000-0000-000000000000";
 async function requireCoachId() {
-  const coach = await getCoach();
-  if (!coach) throw new Error(`Chưa có coach "${DEFAULT_COACH_SLUG}" trong database`);
-  return coach.id;
+  return (await getCoach())?.id ?? NO_COACH;
+}
+
+function optional(what: string, error: unknown): never[] {
+  console.error(`Không đọc được ${what}`, error);
+  return [];
 }
 
 export const getCourses = cache(async (): Promise<Course[]> => {
@@ -32,7 +41,7 @@ export const getCourses = cache(async (): Promise<Course[]> => {
     .eq("is_public", true)
     .order("sort")
     .order("created_at");
-  if (error) throw error;
+  if (error) return optional("courses", error);
   return data as Course[];
 });
 
@@ -48,7 +57,7 @@ export const getVenues = cache(async (): Promise<Venue[]> => {
     .eq("coach_id", await requireCoachId())
     .eq("is_public", true)
     .order("sort");
-  if (error) throw error;
+  if (error) return optional("venues", error);
   return data as Venue[];
 });
 
@@ -61,7 +70,7 @@ export const getOpenClasses = cache(async (): Promise<OpenClass[]> => {
     .eq("is_public", true)
     .order("sort")
     .order("start_date");
-  if (error) throw error;
+  if (error) return optional("open_classes", error);
   return data as OpenClass[];
 });
 
@@ -72,7 +81,7 @@ export const getVideoGroups = cache(async (): Promise<VideoGroup[]> => {
     .select("id, slug, name")
     .eq("coach_id", await requireCoachId())
     .order("sort");
-  if (error) throw error;
+  if (error) return optional("video_groups", error);
   return data as VideoGroup[];
 });
 
@@ -85,15 +94,9 @@ export const getVideos = cache(async (): Promise<Video[]> => {
     .eq("visibility", "public")
     .order("sort")
     .order("created_at");
-  if (error) throw error;
+  if (error) return optional("videos", error);
   return data as Video[];
 });
-
-/** Nội dung phụ (bài viết, đánh giá): lỗi đọc thì coi như chưa có, không làm hỏng cả trang. */
-function optional(what: string, error: unknown): never[] {
-  console.error(`Không đọc được ${what}`, error);
-  return [];
-}
 
 export const getPosts = cache(async (): Promise<Post[]> => {
   if (!hasSupabase) return sample.samplePosts;
