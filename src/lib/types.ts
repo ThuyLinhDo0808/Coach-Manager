@@ -1,4 +1,4 @@
-export type CourseKind = "co-ban" | "sua-loi" | "nang-cao" | "luyen-cu" | "kid" | "kem-1-1";
+export type CourseKind = "co-ban" | "sua-loi" | "nang-cao" | "luyen-cu" | "kid" | "kem-1-1" | "nhom";
 
 export const COURSE_KINDS: { value: CourseKind; label: string }[] = [
   { value: "co-ban", label: "Cơ bản" },
@@ -7,6 +7,7 @@ export const COURSE_KINDS: { value: CourseKind; label: string }[] = [
   { value: "luyen-cu", label: "Luyện cú" },
   { value: "kid", label: "Kid" },
   { value: "kem-1-1", label: "Kèm 1-1" },
+  { value: "nhom", label: "Nhóm nhỏ" },
 ];
 
 export type Contacts = {

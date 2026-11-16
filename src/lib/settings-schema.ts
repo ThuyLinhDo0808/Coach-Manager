@@ -97,7 +97,7 @@ export const venueSchema = z.object({
   sort: int(0, 9999, "Thứ tự là số từ 0 trở lên"),
 });
 
-export const COURSE_KIND_VALUES = ["co-ban", "sua-loi", "nang-cao", "luyen-cu", "kid", "kem-1-1"] as const;
+export const COURSE_KIND_VALUES = ["co-ban", "sua-loi", "nang-cao", "luyen-cu", "kid", "kem-1-1", "nhom"] as const;
 
 export const courseSchema = z.object({
   id: optId,

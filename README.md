@@ -35,7 +35,14 @@ Chạy theo thứ tự, mỗi file một lần. Nếu Supabase hiện cảnh bá
 5. `supabase/migrations/20261118000100_classes_sessions_students.sql` — lớp, buổi học, học viên, điểm danh (xoá bảng `open_classes` sau khi chép sang `classes`)
 6. `supabase/migrations/20261119000000_money_offers.sql` — sổ thu chi, offer, thanh toán
 7. `supabase/migrations/20261120000000_settings_content.sql` — mời thành viên, mẫu tin nhắn, cột sân
-8. `supabase/seed.sql` — nội dung mẫu (chạy lại nhiều lần cũng không sao). Sinh lại bằng `npm run seed:gen`.
+8. `supabase/migrations/20261121000000_course_kind_nhom.sql` — thêm loại khoá "Nhóm nhỏ"
+9. `supabase/seed.sql` — nội dung mẫu (chạy lại nhiều lần cũng không sao). Sinh lại bằng `npm run seed:gen`.
+
+### Dữ liệu demo (tuỳ chọn)
+
+- `supabase/demo/goi-hoc-l2t.sql` — 4 gói học theo bảng giá L2T Academy (1:1, 1:2, 1:3, 1:4), thay 3 khoá mẫu cũ. Đây là dữ liệu thật của coach, nên giữ lại.
+- `supabase/demo/du-lieu-demo.sql` — dữ liệu GIẢ cho khu quản lý: 9 học viên, 4 lớp, ~40 buổi học (có điểm danh, nhận xét), 8 nhu cầu ở mọi trạng thái, 1 offer chờ xác nhận, sổ thu chi vài tháng. Ngày tháng tính theo hôm nay.
+- `supabase/demo/xoa-du-lieu-demo.sql` — xoá sạch dữ liệu demo (mọi dòng có id bắt đầu bằng `dddddddd`), không đụng dữ liệu thật. Chạy trước khi dùng thật.
 
 ### Cấu hình Supabase Auth
 
