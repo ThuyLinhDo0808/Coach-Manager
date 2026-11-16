@@ -26,12 +26,21 @@ Quy ước dự án: [CLAUDE.md](CLAUDE.md).
 
 ### Chạy migration bằng tay (SQL Editor của Supabase)
 
-Chạy theo thứ tự, mỗi file một lần:
+Chạy theo thứ tự, mỗi file một lần. Nếu Supabase hiện cảnh báo "destructive" hoặc "without RLS", chọn **Run and enable RLS**.
 
 1. `supabase/migrations/20261116000000_init.sql` — bảng, RLS, hàm `submit_lead`
 2. `supabase/migrations/20261116000100_grants.sql` — quyền cho API
 3. `supabase/migrations/20261117000000_public_content_and_crm.sql` — bài viết, đánh giá, nhật ký nhu cầu
-4. `supabase/seed.sql` — nội dung mẫu (chạy lại nhiều lần cũng không sao). Sinh lại bằng `npm run seed:gen`.
+4. `supabase/migrations/20261118000000_settings_and_roles.sql` — cài đặt, vai trò trợ giảng
+5. `supabase/migrations/20261118000100_classes_sessions_students.sql` — lớp, buổi học, học viên, điểm danh (xoá bảng `open_classes` sau khi chép sang `classes`)
+6. `supabase/migrations/20261119000000_money_offers.sql` — sổ thu chi, offer, thanh toán
+7. `supabase/migrations/20261120000000_settings_content.sql` — mời thành viên, mẫu tin nhắn, cột sân
+8. `supabase/seed.sql` — nội dung mẫu (chạy lại nhiều lần cũng không sao). Sinh lại bằng `npm run seed:gen`.
+
+### Cấu hình Supabase Auth
+
+- **Authentication → Sign In / Providers → Email**: giữ bật **Confirm email**. Lời mời vào đội chỉ được nhận khi email đã xác nhận.
+- **Authentication → URL Configuration → Site URL**: đặt bằng địa chỉ web thật (ví dụ `https://coach-trung-muoi.vercel.app`) và thêm `https://coach-trung-muoi.vercel.app/**` vào Redirect URLs, để link trong thư xác nhận mở đúng trang.
 
 ### Tạo tài khoản đăng nhập khu quản lý
 
@@ -45,7 +54,7 @@ from public.coaches c, auth.users u
 where c.slug = 'trung-muoi' and u.email = 'EMAIL_CUA_BAN';
 ```
 
-Đăng nhập tại `/dang-nhap`.
+Đăng nhập tại `/dang-nhap`. Từ tài khoản thứ hai trở đi, coach mời ở **Cài đặt › Thành viên & quyền** rồi gửi link `/tham-gia` cho người được mời.
 
 ## Lộ trình
 
@@ -54,6 +63,13 @@ Giao diện bám bộ mẫu 20 màn (đặc tả mục 4 và 5).
 | Đợt | Nội dung | Trạng thái |
 |---|---|---|
 | 1 | Trang công khai (Giới thiệu, Khoá học, Video, Lịch & sân, Bài viết, Đánh giá), form nhu cầu 3 bước, đăng nhập, Tổng quan, Nhu cầu & chốt khoá | Xong |
-| 2 | Khoá học & lớp, Lịch dạy, buổi học (điểm danh, nhận xét), Học viên | Chưa làm |
-| 3 | Thu chi, offer + VietQR, Thống kê | Chưa làm |
-| 4 | Cài đặt (9 mục), quản lý Nội dung, thông báo | Chưa làm |
+| 2 | Khoá học & lớp, Lịch dạy, buổi học (điểm danh, nhận xét), Học viên | Xong |
+| 3 | Thu chi, offer + VietQR, Thống kê | Xong |
+| 4 | Cài đặt (9 mục), quản lý Nội dung, mời thành viên | Xong |
+
+### Chưa làm (cần thêm dịch vụ hoặc tài khoản học viên)
+
+- Gửi email / Zalo tự động (nhắc lịch, chúc sinh nhật, báo nhu cầu mới): Cài đặt › Thông báo và Mẫu tin nhắn mới lưu lựa chọn; mẫu tin có nút sao chép để dán sang Zalo.
+- Học viên đăng nhập xem lịch, nhận xét, video riêng; quét QR điểm danh.
+- Đối soát chuyển khoản tự động với ngân hàng; tên miền riêng (làm tay trong Vercel theo hướng dẫn ở Cài đặt).
+- Quyền theo vai trò và chia nhu cầu xoay vòng mới được ghi nhận, chưa chặn / chia tự động.
