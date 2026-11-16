@@ -6,6 +6,8 @@ import { markBirthdayGift } from "@/app/quan-ly/_actions/teaching";
 import { getLeads } from "@/lib/admin-data";
 import { requireSession } from "@/lib/auth";
 import { countByStatus, isOverdue, OPEN_STATUSES } from "@/lib/leads";
+import { monthRange, totals, trieu } from "@/lib/money";
+import { moneyDb } from "@/lib/money-data";
 import { sessionsLeft } from "@/lib/teaching";
 import { teachingDb } from "@/lib/teaching-data";
 import { addDays, dayLabel, daysToBirthday, dmy, nowMs, vnDate, vnIso, vnTime } from "@/lib/time";
@@ -23,6 +25,11 @@ export default async function TongQuanPage() {
   const feedback = await t.feedbackOfSessions(recent.map((s) => s.id));
   const activeClassIds = [...new Set(enrollments.filter((e) => e.status === "dang-hoc").map((e) => e.class_id))];
   const classOfSession = new Map((await t.sessionsOfClasses(activeClassIds)).map((s) => [s.id, s.class_id]));
+  const isOwner = session.role === "owner";
+  const money = await moneyDb(session.coach.id);
+  const openOffers = await money.offersOpen();
+  const reported = openOffers.filter((o) => o.status === "da-bao");
+  const monthSum = isOwner ? totals(await money.ledgerBetween(monthRange(today.slice(0, 7)).from, monthRange(today.slice(0, 7)).to)) : null;
   const counts = countByStatus(leads);
   const overdue = leads.filter((l) => isOverdue(l));
   const reminders = leads.filter((l) => l.remind_on && l.remind_on <= today && OPEN_STATUSES.includes(l.status));
@@ -57,6 +64,7 @@ export default async function TongQuanPage() {
   if (reminders.length) todo.push({ icon: "clock", color: "amber", text: `${reminders.length} nhu cầu đến hẹn nhắc lại`, href: "/quan-ly/nhu-cau" });
   if (notMarked.length) todo.push({ icon: "check", color: "cyan", text: `${notMarked.length} buổi đã qua chưa điểm danh`, href: `/quan-ly/lich-day/${notMarked[0].id}` });
   if (noFeedback.length) todo.push({ icon: "pen", color: "indigo", text: `${noFeedback.length} buổi đã qua chưa nhận xét đủ`, href: `/quan-ly/lich-day/${noFeedback[0].id}#nhan-xet` });
+  if (reported.length) todo.push({ icon: "wallet", color: "emerald", text: `${reported.length} khoản học viên báo đã chuyển, chờ xác nhận`, href: isOwner ? "/quan-ly/thu-chi?tab=cho" : "/quan-ly/nhu-cau" });
   if (lowPackages.length) todo.push({ icon: "clock", color: "amber", text: `${lowPackages.length} gói sắp hết buổi`, href: "/quan-ly/hoc-vien" });
 
   const year = Number(today.slice(0, 4));
@@ -98,11 +106,19 @@ export default async function TongQuanPage() {
           <div className="v">{active.length}</div>
           <div className="s">{newThisMonth ? `+${newThisMonth} trong tháng` : "không có học viên mới tháng này"}</div>
         </Link>
-        <Link href="/quan-ly/nhu-cau" className="card kpi">
-          <div className="l">Đã chốt tháng này</div>
-          <div className="v">{closedThisMonth}</div>
-          <div className="s">{open} nhu cầu đang mở</div>
-        </Link>
+        {monthSum ? (
+          <Link href="/quan-ly/thu-chi" className="card kpi">
+            <div className="l">Thu tháng này</div>
+            <div className="v">{trieu(monthSum.thu)}</div>
+            <div className="s">Còn lại {trieu(monthSum.net)}{openOffers.length ? ` · ${openOffers.length} offer đang mở` : ""}</div>
+          </Link>
+        ) : (
+          <Link href="/quan-ly/nhu-cau" className="card kpi">
+            <div className="l">Đã chốt tháng này</div>
+            <div className="v">{closedThisMonth}</div>
+            <div className="s">{open} nhu cầu đang mở</div>
+          </Link>
+        )}
       </div>
 
       <div className="grid items-start gap-4 md:grid-cols-[1.4fr_1fr]">

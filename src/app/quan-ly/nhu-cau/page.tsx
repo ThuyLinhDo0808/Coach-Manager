@@ -6,6 +6,10 @@ import { LeadDetail } from "@/components/lead-detail";
 import { NewLeadForm } from "@/components/new-lead-form";
 import { getAdminCourses, getLeadNotes, getLeads, getMembers } from "@/lib/admin-data";
 import { requireSession } from "@/lib/auth";
+import { headers } from "next/headers";
+import { LeadOffers } from "@/components/lead-offers";
+import { moneyDb } from "@/lib/money-data";
+import { getSettings } from "@/lib/settings";
 import { teachingDb } from "@/lib/teaching-data";
 import { BOARD_STATUSES, closeRate, countByStatus, isOverdue, OPEN_STATUSES } from "@/lib/leads";
 import { LEAD_STATUSES, ROLE_LABEL, type LeadStatus } from "@/lib/types";
@@ -30,6 +34,10 @@ export default async function NhuCauPage({ searchParams }: { searchParams: Promi
   const notes = selected ? await getLeadNotes(selected.id) : [];
   const t = await teachingDb(session.coach.id);
   const [classes, venues, students] = selected ? await Promise.all([t.classes(), t.venues(), t.students()]) : [[], [], []];
+  const offers = selected ? await (await moneyDb(session.coach.id)).offersOfLead(selected.id) : [];
+  const h = await headers();
+  const origin = `${h.get("x-forwarded-proto") ?? "https"}://${h.get("x-forwarded-host") ?? h.get("host") ?? ""}`;
+  const openClasses = classes.filter((c) => c.status === "sap-dien-ra" || c.status === "dang-dien-ra").map((c) => ({ id: c.id, label: c.title, price: c.price }));
 
   const mobileStatus = (LEAD_STATUSES.some((s) => s.value === sp.cot) ? sp.cot : "moi") as LeadStatus;
   const courseTitle = (id: string | null) => courses.find((c) => c.id === id)?.title;
@@ -120,7 +128,18 @@ export default async function NhuCauPage({ searchParams }: { searchParams: Promi
           members={members}
           courseTitle={courseTitle(selected.course_id)}
           closeHref={href({ id: undefined })}
-          classes={classes.filter((c) => c.status === "sap-dien-ra" || c.status === "dang-dien-ra").map((c) => ({ id: c.id, label: c.title }))}
+          classes={openClasses}
+          offers={
+            <LeadOffers
+              leadId={selected.id}
+              offers={offers}
+              classes={openClasses}
+              isOwner={session.role === "owner"}
+              origin={origin}
+              depositPct={getSettings(session.coach.settings).payout.deposit_pct}
+              canClose={selected.status !== "da-chot"}
+            />
+          }
           venues={venues.map((v) => ({ id: v.id, label: v.name }))}
           studentId={students.find((x) => x.lead_id === selected.id)?.id ?? null}
         />

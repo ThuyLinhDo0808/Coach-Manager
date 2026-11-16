@@ -23,9 +23,9 @@ function Row({ label, value }: { label: string; value: React.ReactNode }) {
   );
 }
 
-type Choice = { id: string; label: string };
+type Choice = { id: string; label: string; price?: number | null };
 
-export function LeadDetail({ lead, notes, members, courseTitle, closeHref, classes, venues, studentId }: { lead: Lead; notes: LeadNote[]; members: Member[]; courseTitle?: string; closeHref: string; classes: Choice[]; venues: Choice[]; studentId: string | null }) {
+export function LeadDetail({ lead, notes, members, courseTitle, closeHref, classes, venues, studentId, offers }: { lead: Lead; notes: LeadNote[]; members: Member[]; courseTitle?: string; closeHref: string; classes: Choice[]; venues: Choice[]; studentId: string | null; offers: React.ReactNode }) {
   const status = LEAD_STATUSES.find((s) => s.value === lead.status)!;
   const overdue = isOverdue(lead);
   const memberName = (id: string | null) => {
@@ -127,6 +127,7 @@ export function LeadDetail({ lead, notes, members, courseTitle, closeHref, class
           </select>
           <button className="btn ghost">Giao</button>
         </form>
+        {offers}
         {lead.status !== "da-chot" && (
           <>
             <h2 className="h2 mt-5" style={{ fontSize: 15 }}>Hẹn học thử</h2>
@@ -147,7 +148,7 @@ export function LeadDetail({ lead, notes, members, courseTitle, closeHref, class
               </div>
             </ActionForm>
 
-            <h2 className="h2 mt-5" style={{ fontSize: 15 }}>Chốt khoá</h2>
+            <h2 className="h2 mt-5" style={{ fontSize: 15 }}>Chốt ngay (đã nhận tiền mặt)</h2>
             <form action={closeLead} className="grid gap-2">
               <input type="hidden" name="id" value={lead.id} />
               <select name="class_id" className="input" style={{ height: 40 }} aria-label="Lớp" defaultValue="">
@@ -159,7 +160,7 @@ export function LeadDetail({ lead, notes, members, courseTitle, closeHref, class
                 <button className="btn primary">Chốt</button>
               </div>
             </form>
-            <p className="mt-1.5 text-xs text-faint">Chốt sẽ tạo hồ sơ học viên và ghi danh vào lớp đã chọn.</p>
+            <p className="mt-1.5 text-xs text-faint">Tạo hồ sơ học viên và ghi danh vào lớp đã chọn. Tiền mặt thì ghi thêm ở Thu chi.</p>
           </>
         )}
         {studentId && (

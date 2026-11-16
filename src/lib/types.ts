@@ -176,7 +176,7 @@ export type LeadNote = {
 
 export type MemberRole = "owner" | "sale" | "tro-giang";
 export const ROLE_LABEL: Record<MemberRole, string> = { owner: "Coach", sale: "Sale", "tro-giang": "Trợ giảng" };
-export type Member = { user_id: string; role: MemberRole; display_name: string | null };
+export type Member = { user_id: string; role: MemberRole; display_name: string | null; commission_pct?: number; wage_per_session?: number };
 
 export type PostTopic = "luat" | "ky-thuat" | "chien-thuat" | "the-luc" | "dung-cu";
 export const POST_TOPICS: { value: PostTopic; label: string }[] = [
