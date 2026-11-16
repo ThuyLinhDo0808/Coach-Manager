@@ -3,7 +3,7 @@ import { Icon } from "@/components/icon";
 import { LostReasonForm } from "@/components/lead-status";
 import { availabilityText, forWhomLabel, genderLabel } from "@/lib/labels";
 import { ageText, isOverdue, maskPhone } from "@/lib/leads";
-import { LEAD_ORIGINS, LEAD_STATUSES, type Lead, type LeadNote, type Member } from "@/lib/types";
+import { LEAD_ORIGINS, LEAD_STATUSES, ROLE_LABEL, type Lead, type LeadNote, type Member } from "@/lib/types";
 import { addLeadNote, assignLead, changeStatus } from "@/app/quan-ly/nhu-cau/actions";
 
 const KIND_LABEL: Record<string, string> = { "ghi-chu": "Ghi chú", goi: "Gọi", nhan: "Nhắn", hen: "Hẹn", "trang-thai": "Trạng thái", "he-thong": "Hệ thống" };
@@ -25,7 +25,7 @@ export function LeadDetail({ lead, notes, members, courseTitle, closeHref }: { l
   const overdue = isOverdue(lead);
   const memberName = (id: string | null) => {
     const m = members.find((x) => x.user_id === id);
-    return m ? (m.display_name ?? (m.role === "owner" ? "Coach" : "Sale")) : null;
+    return m ? (m.display_name ?? (ROLE_LABEL[m.role])) : null;
   };
   const sportLine = lead.played_sports == null ? null : lead.played_sports ? `Đã chơi ${lead.sports.join(", ").toLowerCase() || "thể thao"}` : "Chưa chơi môn nào";
 
@@ -116,7 +116,7 @@ export function LeadDetail({ lead, notes, members, courseTitle, closeHref }: { l
             <option value="">Chưa giao ai</option>
             {members.map((m) => (
               <option key={m.user_id} value={m.user_id}>
-                {m.display_name ?? (m.role === "owner" ? "Coach" : "Sale")} · {m.role === "owner" ? "Coach" : "Sale"}
+                {m.display_name ?? (ROLE_LABEL[m.role])} · {ROLE_LABEL[m.role]}
               </option>
             ))}
           </select>

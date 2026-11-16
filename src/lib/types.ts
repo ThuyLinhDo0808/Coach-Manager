@@ -41,6 +41,7 @@ export type Coach = {
   experience: { year: string; title: string; detail?: string }[];
   contacts: Contacts;
   accepting_students: boolean;
+  settings?: unknown;
 };
 
 export type Venue = {
@@ -173,7 +174,9 @@ export type LeadNote = {
   created_at: string;
 };
 
-export type Member = { user_id: string; role: "owner" | "sale"; display_name: string | null };
+export type MemberRole = "owner" | "sale" | "tro-giang";
+export const ROLE_LABEL: Record<MemberRole, string> = { owner: "Coach", sale: "Sale", "tro-giang": "Trợ giảng" };
+export type Member = { user_id: string; role: MemberRole; display_name: string | null };
 
 export type PostTopic = "luat" | "ky-thuat" | "chien-thuat" | "the-luc" | "dung-cu";
 export const POST_TOPICS: { value: PostTopic; label: string }[] = [

@@ -7,7 +7,7 @@ import { NewLeadForm } from "@/components/new-lead-form";
 import { getAdminCourses, getLeadNotes, getLeads, getMembers } from "@/lib/admin-data";
 import { requireSession } from "@/lib/auth";
 import { BOARD_STATUSES, closeRate, countByStatus, isOverdue, OPEN_STATUSES } from "@/lib/leads";
-import { LEAD_STATUSES, type LeadStatus } from "@/lib/types";
+import { LEAD_STATUSES, ROLE_LABEL, type LeadStatus } from "@/lib/types";
 
 export const metadata = { title: "Nhu cầu & chốt khoá" };
 
@@ -32,7 +32,7 @@ export default async function NhuCauPage({ searchParams }: { searchParams: Promi
   const courseTitle = (id: string | null) => courses.find((c) => c.id === id)?.title;
   const memberName = (id: string | null) => {
     const m = members.find((x) => x.user_id === id);
-    return m ? (m.display_name ?? (m.role === "owner" ? "Coach" : "Sale")) : null;
+    return m ? (m.display_name ?? (ROLE_LABEL[m.role])) : null;
   };
   const href = (patch: Partial<Search>) => {
     const q = new URLSearchParams();
