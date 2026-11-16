@@ -17,6 +17,11 @@ declare
   i int;
 begin
   if c is null then raise exception 'Chưa có coach trung-muoi'; end if;
+  if (select count(*) from public.courses where coach_id = c and id in (
+        '00000000-0000-0000-0000-0000000000c1', '00000000-0000-0000-0000-0000000000c2',
+        '00000000-0000-0000-0000-0000000000c3', '00000000-0000-0000-0000-0000000000c4')) < 4 then
+    raise exception 'Chưa có đủ 4 gói học. Chạy migration 20261121000000_course_kind_nhom.sql rồi supabase/demo/goi-hoc-l2t.sql trước.';
+  end if;
   if exists (select 1 from public.students where id::text like 'dddddddd%') then
     raise exception 'Đã có dữ liệu demo. Chạy xoa-du-lieu-demo.sql trước nếu muốn tạo lại.';
   end if;
