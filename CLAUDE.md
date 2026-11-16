@@ -13,7 +13,7 @@ Web riêng của Coach Trung Muối: trang công khai cho học viên và khu qu
 ## Dữ liệu
 - Mọi bảng có `coach_id` để sau này nhiều coach dùng chung. Quyền do RLS quyết định:
   khách chỉ đọc nội dung công khai và gửi nhu cầu qua hàm `submit_lead`; thành viên (`coach_members`, vai trò owner/sale) đọc ghi dữ liệu coach của mình.
-- Web chỉ dùng URL + khoá công khai (publishable key). Không đưa service role key vào code hay Vercel.
+- Web chỉ dùng URL + khoá công khai (publishable key), đọc ở phía server trong `src/lib/env.ts` (nhận cả tên biến do tích hợp Vercel ↔ Supabase tự thêm). Code không bao giờ đọc service role / secret key.
 - Chưa cấu hình Supabase thì web tự dùng nội dung mẫu trong `src/lib/sample-data.ts`.
 
 ## Giao diện

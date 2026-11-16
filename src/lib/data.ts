@@ -89,6 +89,12 @@ export const getVideos = cache(async (): Promise<Video[]> => {
   return data as Video[];
 });
 
+/** Nội dung phụ (bài viết, đánh giá): lỗi đọc thì coi như chưa có, không làm hỏng cả trang. */
+function optional(what: string, error: unknown): never[] {
+  console.error(`Không đọc được ${what}`, error);
+  return [];
+}
+
 export const getPosts = cache(async (): Promise<Post[]> => {
   if (!hasSupabase) return sample.samplePosts;
   const { data, error } = await publicClient()
@@ -97,7 +103,7 @@ export const getPosts = cache(async (): Promise<Post[]> => {
     .eq("coach_id", await requireCoachId())
     .eq("status", "da-dang")
     .order("published_at", { ascending: false });
-  if (error) throw error;
+  if (error) return optional("posts", error);
   return data as Post[];
 });
 
@@ -114,7 +120,7 @@ export const getReviews = cache(async (): Promise<Review[]> => {
     .eq("is_public", true)
     .order("is_pinned", { ascending: false })
     .order("created_at", { ascending: false });
-  if (error) throw error;
+  if (error) return optional("reviews", error);
   return data as Review[];
 });
 
