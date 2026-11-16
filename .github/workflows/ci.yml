@@ -1,8 +1,10 @@
 name: CI
 
-# Chỉ chạy khi push / mở PR. Không có lịch chạy định kỳ (phút Actions dùng chung tài khoản).
+# Chỉ chạy khi push lên main hoặc khi có PR. Không có lịch chạy định kỳ (phút Actions dùng chung tài khoản).
+# Nhánh có PR chỉ chạy một lần (sự kiện pull_request), không chạy trùng cho push.
 on:
   push:
+    branches: [main]
   pull_request:
 
 concurrency:

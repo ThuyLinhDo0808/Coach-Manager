@@ -8,7 +8,7 @@ Web riêng của Coach Trung Muối: trang công khai cho học viên và khu qu
 ## Công nghệ
 - Next.js 16 (App Router, TypeScript), Tailwind CSS v4. Không bật `cacheComponents`; trang công khai dùng `export const revalidate`.
 - Supabase (project riêng, tổ chức "ThuyLinhDo0808's Org"). Lược đồ trong `supabase/migrations/`.
-- Deploy: Vercel. CI: GitHub Actions chỉ chạy khi push/PR (lint, typecheck, test, build) — **không thêm workflow chạy theo lịch**.
+- Deploy: Vercel. CI: GitHub Actions chỉ chạy khi push lên main hoặc có PR (lint, typecheck, test, build) — **không thêm workflow chạy theo lịch**.
 
 ## Dữ liệu
 - Mọi bảng có `coach_id` để sau này nhiều coach dùng chung. Quyền do RLS quyết định:
