@@ -135,7 +135,11 @@ export default async function ChiTietKhoaPage({ params }: Props) {
           {course.commitments.length > 0 && (
             <div className="soft mt-5" style={{ padding: 14 }}>
               <b>Cam kết</b>
-              <div className="mt-1 text-[13px] text-muted">{course.commitments.join(" ")}</div>
+              <ul className="mt-1 grid gap-0.5 text-[13px] text-muted">
+                {course.commitments.map((c) => (
+                  <li key={c}>{c}</li>
+                ))}
+              </ul>
             </div>
           )}
 
