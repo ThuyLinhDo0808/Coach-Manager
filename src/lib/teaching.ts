@@ -89,6 +89,7 @@ export type Enrollment = {
   graduated_at: string | null;
   /** Người chốt (sale nhận 10% khi chia tiền buổi). */
   closer_id: string | null;
+  created_at?: string;
 };
 
 export type AttendanceStatus = "co-mat" | "vang" | "bao-nghi";

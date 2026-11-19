@@ -83,16 +83,18 @@ export const MENU: MenuGroup[] = [
       { label: "Chi trả", href: `${Q}/tai-chinh/chi-tra`, perm: "tai-chinh" },
       { label: "Trợ giảng", href: `${Q}/tai-chinh/tro-giang`, perm: "tro-giang-bang" },
       { label: "Các quỹ", href: `${Q}/tai-chinh/quy`, perm: "quy-xem" },
-      { label: "Báo cáo lãi / lỗ", perm: "bao-cao" },
+      { label: "Báo cáo lãi / lỗ", href: `${Q}/tai-chinh/bao-cao`, perm: "bao-cao" },
+      { label: "Thu nhập của tôi", href: `${Q}/thu-nhap`, perm: "thu-nhap" },
+      { label: "Phần của tôi", href: `${Q}/phan-cua-toi`, perm: "phan-cua-toi" },
     ],
   },
   {
     key: "thong-ke", label: "Thống kê", icon: "chart", color: "amber", section: "kinh-doanh",
     children: [
       { label: "Doanh thu", href: `${Q}/thong-ke`, perm: "thong-ke" },
-      { label: "Tuyển sinh", perm: "thong-ke" },
-      { label: "Học viên", perm: "thong-ke" },
-      { label: "Hiệu suất coach", perm: "thong-ke" },
+      { label: "Tuyển sinh", href: `${Q}/thong-ke/tuyen-sinh`, perm: "thong-ke" },
+      { label: "Học viên", href: `${Q}/thong-ke/hoc-vien`, perm: "thong-ke" },
+      { label: "Hiệu suất coach", href: `${Q}/thong-ke/hieu-suat-coach`, perm: "thong-ke" },
     ],
   },
   {

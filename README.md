@@ -40,7 +40,8 @@ Chạy theo thứ tự, mỗi file một lần. Nếu Supabase hiện cảnh bá
 10. `supabase/migrations/20261123000000_roles_team.sql` — nhiều vai trò, người dạy / dạy thay, người chốt, quản lý xác nhận xếp lớp, quyền theo vai trò
 11. `supabase/migrations/20261124000000_split_engine.sql` — bộ máy chia tiền: tỉ lệ & cổ đông, bút toán chia theo buổi × học viên (tự ghi khi điểm danh / hoàn tất buổi)
 12. `supabase/migrations/20261125000000_month_close_funds.sql` — chốt tháng, bảng phải trả, nhật ký sửa, điều chỉnh tháng sau, các quỹ, trợ giảng, kho ảnh chứng từ riêng tư `chung-tu`
-13. `supabase/seed.sql` — nội dung mẫu (chạy lại nhiều lần cũng không sao). Sinh lại bằng `npm run seed:gen`.
+13. `supabase/migrations/20261126000000_reports.sql` — số tổng cho Báo cáo lãi / lỗ (quản lý, cổ đông xem được) và Hiệu suất coach
+14. `supabase/seed.sql` — nội dung mẫu (chạy lại nhiều lần cũng không sao). Sinh lại bằng `npm run seed:gen`.
 
 ### Dữ liệu demo (tuỳ chọn)
 
@@ -109,3 +110,10 @@ Database tự ghi lại bút toán (`regen_session_split`) khi đổi điểm da
 - **Trợ giảng** (ngoài 6 phần): cơ chế theo lớp (tiền / buổi, tiền / tháng), học viên đã trả, đã chuyển cho trợ giảng + ảnh.
 - Ảnh lưu ở kho riêng tư `chung-tu` của Supabase Storage, xem qua đường dẫn ký tạm 1 giờ.
 - Kiểm tra: `psql -v ON_ERROR_STOP=1 -f supabase/tests/month_close_test.sql`.
+
+### Báo cáo và thống kê
+
+- **Báo cáo lãi / lỗ** (coach chủ, quản lý, cổ đông): theo buổi đã dạy — doanh thu đã dạy − coach − sale = phần trung tâm giữ; lãi / lỗ = cổ đông nhận + quỹ tăng thêm (vào − chi quỹ) + (học viên trả trợ giảng − phải trả trợ giảng). Số lấy qua hàm `split_summary` nên quản lý / cổ đông không thấy học phí từng học viên.
+- **Thống kê** (coach chủ): Doanh thu, Tuyển sinh (phễu, nguồn, theo người chốt), Học viên (mới, chuyên cần, học tiếp, DUPR), Hiệu suất coach (buổi, dạy thay, lượt học viên, doanh thu, phần coach).
+- **Thu nhập của tôi** (coach, sale, trợ giảng): phần dạy, phần chốt, trợ giảng của tháng (tạm tính tới khi chốt) và lịch sử chi trả. **Phần của tôi** (cổ đông): phần cổ đông theo tháng; cần gắn tài khoản cho cổ đông ở Cài đặt › Tỉ lệ chia & cổ đông.
+- Tab "Lương & hoa hồng" cũ trong Sổ thu chi đã bỏ: hoa hồng theo % offer được thay bằng 10% theo buổi cho người chốt.

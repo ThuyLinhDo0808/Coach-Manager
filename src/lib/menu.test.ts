@@ -11,11 +11,12 @@ describe("menu", () => {
     expect(activeChild("/quan-ly/cai-dat/mau-khoa")?.group.key).toBe("lop");
     expect(activeChild("/quan-ly/noi-dung")?.child.label).toBe("Giáo án");
   });
-  it("trợ giảng không thấy tài chính, tuyển sinh, học viên", () => {
+  it("trợ giảng không thấy sổ tài chính, tuyển sinh, học viên; chỉ thấy tiền của mình", () => {
     const perms = permsFor(["tro-giang"]);
-    const keys = menuFor((p) => perms.includes(p)).map((g) => g.key);
+    const menu = menuFor((p) => perms.includes(p));
+    const keys = menu.map((g) => g.key);
     expect(keys).toContain("lich");
-    expect(keys).not.toContain("tai-chinh");
+    expect(menu.find((g) => g.key === "tai-chinh")?.children.map((c) => c.label)).toEqual(["Thu nhập của tôi"]);
     expect(keys).not.toContain("tuyen-sinh");
     expect(keys).not.toContain("hoc-vien");
   });

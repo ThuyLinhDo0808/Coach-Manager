@@ -33,8 +33,9 @@ create table if not exists public.assistant_payments (
 
 -- Tiền trợ giảng phải trả trong tháng: buổi (không huỷ, đã hoàn tất hoặc đã điểm danh) có người đó làm trợ giảng.
 -- Coach chủ / quản lý thấy hết; trợ giảng thấy của mình; coach thấy các lớp mình dạy chính.
-create or replace function public.assistant_due(p_coach uuid, p_month text)
-returns table (class_id uuid, assistant_id uuid, sessions int, per_session int, per_month int, amount int)
+drop function if exists public.assistant_due(uuid, text);
+create function public.assistant_due(p_coach uuid, p_month text)
+returns table (class_id uuid, assistant_id uuid, sessions int, per_session int, per_month int, amount int, class_title text)
 language sql
 stable
 security definer
@@ -49,8 +50,9 @@ as $$
     group by 1, 2
   )
   select s.class_id, s.assistant_id, s.n, coalesce(r.per_session, 0), coalesce(r.per_month, 0),
-    coalesce(r.per_session, 0) * s.n + coalesce(r.per_month, 0)
+    coalesce(r.per_session, 0) * s.n + coalesce(r.per_month, 0), c.title
   from s
+  join public.classes c on c.id = s.class_id
   left join public.assistant_rates r on r.class_id = s.class_id and r.assistant_id = s.assistant_id
   where public.has_any_role(p_coach, array['chu', 'quan-ly'])
      or s.assistant_id = (select auth.uid())

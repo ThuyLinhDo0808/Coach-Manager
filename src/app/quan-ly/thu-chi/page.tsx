@@ -8,12 +8,12 @@ import { requirePerm } from "@/lib/auth";
 import { studentDebts, categoryLabel, dong, isMonth, LEDGER_CATEGORIES, monthRange, profitByClass, shiftMonth, totals, trieu } from "@/lib/money";
 import { moneyDb } from "@/lib/money-data";
 import { teachingDb } from "@/lib/teaching-data";
-import { dmy, vnDate, vnIso } from "@/lib/time";
+import { dmy, vnDate } from "@/lib/time";
 import { ROLE_LABEL } from "@/lib/types";
 
 export const metadata = { title: "Sổ thu chi" };
 
-const TABS = [["so", "Sổ thu chi"], ["cho", "Chờ xác nhận"], ["luong", "Lương & hoa hồng"]] as const;
+const TABS = [["so", "Sổ thu chi"], ["cho", "Chờ xác nhận"]] as const;
 
 function Amount({ kind, amount }: { kind: "thu" | "chi"; amount: number }) {
   return (
@@ -32,9 +32,9 @@ export default async function ThuChiPage({ searchParams }: { searchParams: Promi
   const m = await moneyDb(session.coach.id);
   const t = await teachingDb(session.coach.id);
   const { from, to } = monthRange(month);
-  const [rows, prevRows, open, classes, students, enrollments, allLedger, members, leads, confirmed] = await Promise.all([
+  const [rows, prevRows, open, classes, students, enrollments, allLedger, members, leads] = await Promise.all([
     m.ledgerBetween(from, to), m.ledgerBetween(monthRange(prev).from, from), m.offersOpen(), t.classes(), t.students(), t.enrollments(),
-    m.ledgerAllThu(), getMembers(session.coach.id), getLeads(session.coach.id), m.offersConfirmedBetween(vnIso(from, "00:00"), vnIso(to, "00:00")),
+    m.ledgerAllThu(), getMembers(session.coach.id), getLeads(session.coach.id),
   ]);
   const sum = totals(rows);
   const prevNet = totals(prevRows).net;
@@ -58,16 +58,6 @@ export default async function ThuChiPage({ searchParams }: { searchParams: Promi
     return `/quan-ly/thu-chi?${q}`;
   };
   const [y, mm] = month.split("-");
-
-  // Hoa hồng sale: % × học phí các offer đã xác nhận trong tháng của nhu cầu do sale đó phụ trách.
-  const commission = members
-    .filter((x) => x.role === "sale")
-    .map((x) => {
-      const mine = confirmed.filter((o) => leads.find((l) => l.id === o.lead_id)?.assigned_to === x.user_id);
-      const revenue = mine.reduce((n, o) => n + o.amount, 0);
-      const pct = Number(x.commission_pct ?? 0);
-      return { x, count: mine.length, revenue, pct, due: Math.round((revenue * pct) / 100) };
-    });
 
   return (
     <>
@@ -215,29 +205,6 @@ export default async function ThuChiPage({ searchParams }: { searchParams: Promi
             </div>
           ))}
           <p className="mt-3 text-xs text-faint">Kiểm tra app ngân hàng theo nội dung chuyển khoản rồi mới bấm Xác nhận tiền. Web không tự đối soát với ngân hàng.</p>
-        </div>
-      )}
-
-      {tab === "luong" && (
-        <div className="card">
-          <h2 className="h2">Hoa hồng sale · tháng {mm}</h2>
-          {commission.length === 0 ? (
-            <div className="text-muted">Chưa có sale nào trong đội.</div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="tbl">
-                <thead><tr><th>Sale</th><th className="text-right!">Khoá chốt</th><th className="text-right!">Học phí</th><th className="text-right!">Tỷ lệ</th><th className="text-right!">Hoa hồng</th></tr></thead>
-                <tbody>
-                  {commission.map((c) => (
-                    <tr key={c.x.user_id}><td className="font-semibold">{c.x.display_name ?? "Sale"}</td><td className="num text-right">{c.count}</td><td className="num text-right">{dong(c.revenue)}</td><td className="num text-right">{c.pct}%</td><td className="num text-right font-bold">{dong(c.due)}</td></tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-          <p className="mt-3 text-xs text-faint">
-            Tính trên các offer đã xác nhận tiền trong tháng của nhu cầu do sale phụ trách. Khi trả, ghi một khoản chi loại “Hoa hồng”. Lương trợ giảng theo buổi chưa tự tính vì buổi học chưa gắn trợ giảng: ghi tay khoản chi loại “Lương”.
-          </p>
         </div>
       )}
     </>

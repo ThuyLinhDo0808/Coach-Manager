@@ -75,7 +75,7 @@ export type FundBalance = { fund: FundKey; vao: number; vao_da_chot: number; chi
 export type FundExpense = { id: string; fund: FundKey; category: ExpenseCategory; amount: number; spent_on: string; note: string | null; proof_path: string | null; class_id: string | null };
 export type AssistantRate = { id: string; class_id: string; assistant_id: string; per_session: number; per_month: number; note: string | null };
 export type AssistantPayment = { id: string; month: string; class_id: string; assistant_id: string; student_paid: number; paid_amount: number; paid_at: string | null; proof_path: string | null; note: string | null };
-export type AssistantDue = { class_id: string; assistant_id: string; sessions: number; per_session: number; per_month: number; amount: number };
+export type AssistantDue = { class_id: string; assistant_id: string; sessions: number; per_session: number; per_month: number; amount: number; class_title: string };
 
 export async function payoutDb(coachId: string) {
   const db = await serverClient();
@@ -100,5 +100,25 @@ export async function payoutDb(coachId: string) {
       if (error || !data) return new Map<string, string>();
       return new Map<string, string>(data.filter((d) => d.signedUrl && d.path).map((d) => [d.path!, d.signedUrl as string]));
     },
+  };
+}
+
+export type PerfRow = { month: string; teacher_id: string; sessions: number; substitute: number; student_turns: number; revenue: number; coach_amount: number };
+
+export async function reportDb(coachId: string) {
+  const db = await serverClient();
+  return {
+    /** Số tổng theo tháng (coach chủ, quản lý, cổ đông). */
+    summary: async (from: string, to: string) =>
+      (await optional(db.rpc("split_summary", { p_coach: coachId, p_from: from, p_to: to }), [] as { month: string; kind: string; amount: number }[])).map((r) => ({ ...r, amount: Number(r.amount) })),
+    performance: async (from: string, to: string) =>
+      (await optional(db.rpc("coach_performance", { p_coach: coachId, p_from: from, p_to: to }), [] as PerfRow[])).map((r) => ({ ...r, revenue: Number(r.revenue), coach_amount: Number(r.coach_amount) })),
+    /** Bút toán của chính người đang đăng nhập (RLS chỉ trả dòng của họ, trừ coach chủ nên lọc thêm). */
+    myEntries: (userId: string, from: string, to: string) =>
+      optional(db.from("split_entries").select("*").eq("coach_id", coachId).eq("party_user_id", userId).gte("month", from).lte("month", to).order("entry_date").limit(20000), [] as SplitEntry[]),
+    entriesOfKind: (kind: PartyKind, from: string, to: string) =>
+      optional(db.from("split_entries").select("*").eq("coach_id", coachId).eq("party_kind", kind).gte("month", from).lte("month", to).limit(50000), [] as SplitEntry[]),
+    myPayouts: (userId: string) =>
+      optional(db.from("split_payouts").select("*").eq("coach_id", coachId).eq("party_user_id", userId).order("month", { ascending: false }).limit(36), [] as Payout[]),
   };
 }
