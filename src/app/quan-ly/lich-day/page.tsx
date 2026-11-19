@@ -1,29 +1,28 @@
 import Link from "next/link";
-import { ActionForm, Submit } from "@/components/action-form";
 import { PageHead } from "@/components/admin-shell";
 import { Icon } from "@/components/icon";
 import { CalendarLegend, sessionEvent, WeekCalendar, type CalEvent } from "@/components/week-calendar";
-import { addFreeSlot, deleteFreeSlot } from "@/app/quan-ly/_actions/teaching";
-import { requireSession } from "@/lib/auth";
-import { teachingDb } from "@/lib/teaching-data";
-import { addDays, dmy, isDate, vnDate, vnIso, weekdayOf, weekStart, WEEKDAY_LONG } from "@/lib/time";
+import { requirePerm } from "@/lib/auth";
+import { peopleOf, teachingDb, withRole } from "@/lib/teaching-data";
+import { addDays, dmy, isDate, vnDate, vnIso, weekdayOf, weekStart } from "@/lib/time";
 
-export const metadata = { title: "Lịch dạy" };
+export const metadata = { title: "Lịch trung tâm" };
 
 const hourOf = (t: string) => Number(t.slice(0, 2)) + Number(t.slice(3, 5)) / 60;
 
-export default async function LichDayPage({ searchParams }: { searchParams: Promise<{ tuan?: string; san?: string; ngay?: string }> }) {
+export default async function LichDayPage({ searchParams }: { searchParams: Promise<{ tuan?: string; san?: string; ngay?: string; coach?: string }> }) {
   const sp = await searchParams;
-  const session = await requireSession();
+  const session = await requirePerm("lich-trung-tam");
   const t = await teachingDb(session.coach.id);
   const today = vnDate();
   const ws = weekStart(isDate(sp.tuan) ? sp.tuan : today);
   const we = addDays(ws, 7);
-  const [sessionsAll, slotsAll, venues, classes] = await Promise.all([
-    t.sessionsBetween(vnIso(ws, "00:00"), vnIso(we, "00:00")), t.freeSlots(), t.venues(), t.classes(),
+  const [sessionsAll, slotsAll, venues, classes, members] = await Promise.all([
+    t.sessionsBetween(vnIso(ws, "00:00"), vnIso(we, "00:00")), t.freeSlots(), t.venues(), t.classes(), t.members(),
   ]);
+  const coaches = withRole(peopleOf(members), "coach", "chu");
   const venueName = (id: string | null) => venues.find((v) => v.id === id)?.name ?? null;
-  const sessions = sp.san ? sessionsAll.filter((s) => s.venue_id === sp.san) : sessionsAll;
+  const sessions = sessionsAll.filter((s) => (!sp.san || s.venue_id === sp.san) && (!sp.coach || s.teacher_id === sp.coach));
   const slots = sp.san ? slotsAll.filter((s) => s.venue_id === sp.san) : slotsAll;
 
   const events: CalEvent[] = [
@@ -49,7 +48,7 @@ export default async function LichDayPage({ searchParams }: { searchParams: Prom
   const selectedDay = sp.ngay != null && /^[0-6]$/.test(sp.ngay) ? Number(sp.ngay) : ws === weekStart(today) ? weekdayOf(today) - 1 : 0;
   const href = (patch: Record<string, string | undefined>) => {
     const q = new URLSearchParams();
-    for (const [k, v] of Object.entries({ tuan: ws, san: sp.san, ngay: sp.ngay, ...patch })) if (v) q.set(k, v);
+    for (const [k, v] of Object.entries({ tuan: ws, san: sp.san, ngay: sp.ngay, coach: sp.coach, ...patch })) if (v) q.set(k, v);
     return `/quan-ly/lich-day?${q}`;
   };
 
@@ -58,7 +57,7 @@ export default async function LichDayPage({ searchParams }: { searchParams: Prom
       <PageHead
         icon="cal"
         color="cyan"
-        title="Lịch dạy"
+        title="Lịch trung tâm"
         sub={`Tuần ${dmy(ws)} – ${dmy(addDays(ws, 6), true)} · ${live.length} buổi · ${fmtH(teachHours)} giờ dạy · ${fmtH(freeHours)} giờ rảnh`}
       >
         <Link href="/quan-ly/khoa-hoc?them=1" className="btn primary">
@@ -72,6 +71,14 @@ export default async function LichDayPage({ searchParams }: { searchParams: Prom
           <Link href={href({ tuan: weekStart(today), ngay: undefined })} className="btn sm ghost bg-white">Hôm nay</Link>
           <Link href={href({ tuan: addDays(ws, 7), ngay: undefined })} className="btn sm ghost bg-white" aria-label="Tuần sau">›</Link>
         </div>
+        {coaches.length > 1 && (
+          <div className="flex max-w-full gap-1.5 overflow-x-auto [scrollbar-width:none]">
+            <Link href={href({ coach: undefined })} className={`chip ${!sp.coach ? "on" : ""}`}>Mọi coach</Link>
+            {coaches.map((c) => (
+              <Link key={c.id} href={href({ coach: c.id })} className={`chip ${sp.coach === c.id ? "on" : ""}`}>{c.name}</Link>
+            ))}
+          </div>
+        )}
         <div className="flex max-w-full gap-1.5 overflow-x-auto [scrollbar-width:none]">
           <Link href={href({ san: undefined })} className={`chip ${!sp.san ? "on" : ""}`}>Mọi sân</Link>
           {venues.map((v) => (
@@ -82,43 +89,10 @@ export default async function LichDayPage({ searchParams }: { searchParams: Prom
 
       <WeekCalendar weekStartDate={ws} events={events} today={today} selectedDay={selectedDay} dayHref={(d) => href({ ngay: String(d) })} />
       <CalendarLegend items={["c", "t", "f", "x"]} />
+      <p className="mt-2 text-xs text-faint">
+        Giờ rảnh hằng tuần (học viên thấy ở trang Lịch &amp; sân) khai ở mục <Link href="/quan-ly/lich-day/gio-ranh" className="font-semibold text-navy">Lịch rảnh 1-1</Link>.
+      </p>
 
-      <section className="card mt-4">
-        <h2 className="h2">
-          Giờ rảnh hằng tuần <span className="text-[13px] font-medium text-faint">học viên thấy ở trang Lịch &amp; sân</span>
-        </h2>
-        <div className="flex flex-wrap gap-2">
-          {slotsAll.length === 0 && <span className="text-muted">Chưa khai giờ rảnh nào.</span>}
-          {slotsAll.map((s) => (
-            <form key={s.id} action={deleteFreeSlot} className="chip" style={{ cursor: "default", paddingRight: 6 }}>
-              <input type="hidden" name="id" value={s.id} />
-              {WEEKDAY_LONG[s.weekday - 1]} {s.start_time.slice(0, 5)}–{s.end_time.slice(0, 5)}
-              {venueName(s.venue_id) ? ` · ${venueName(s.venue_id)}` : ""}
-              <button className="grid size-6 place-items-center rounded-full hover:bg-page" aria-label="Xoá giờ rảnh này">
-                <Icon name="x" size={14} />
-              </button>
-            </form>
-          ))}
-        </div>
-        <ActionForm action={addFreeSlot} resetOnOk className="divide-row mt-3 grid grid-cols-2 items-end gap-3 pt-3 md:grid-cols-5">
-          <div className="field">
-            <label htmlFor="fs_day">Thứ</label>
-            <select id="fs_day" name="weekday" className="input" defaultValue="1">
-              {WEEKDAY_LONG.map((l, i) => <option key={l} value={i + 1}>{l}</option>)}
-            </select>
-          </div>
-          <div className="field"><label htmlFor="fs_s">Từ</label><input id="fs_s" name="start_time" type="time" required className="input" defaultValue="18:00" /></div>
-          <div className="field"><label htmlFor="fs_e">Đến</label><input id="fs_e" name="end_time" type="time" required className="input" defaultValue="20:00" /></div>
-          <div className="field">
-            <label htmlFor="fs_v">Sân</label>
-            <select id="fs_v" name="venue_id" className="input" defaultValue="">
-              <option value="">Sân nào cũng được</option>
-              {venues.map((v) => <option key={v.id} value={v.id}>{v.name}</option>)}
-            </select>
-          </div>
-          <Submit className="btn navy">Thêm giờ rảnh</Submit>
-        </ActionForm>
-      </section>
     </>
   );
 }

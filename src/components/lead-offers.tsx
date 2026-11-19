@@ -1,6 +1,8 @@
 import { ActionForm, Submit } from "@/components/action-form";
 import { CopyButton } from "@/components/copy-button";
 import { cancelOffer, confirmOffer, createOffer } from "@/app/quan-ly/_actions/money";
+import { CloserSelect } from "@/components/closer-select";
+import type { Member } from "@/lib/types";
 import { dong, type Offer } from "@/lib/money";
 import { dmy } from "@/lib/time";
 
@@ -12,7 +14,7 @@ const STATUS: Record<Offer["status"], [string, string]> = {
 };
 
 /** Khối "Gửi offer" trong chi tiết nhu cầu: tạo link thanh toán VietQR và theo dõi trạng thái. */
-export function LeadOffers({ leadId, offers, classes, isOwner, origin, depositPct, canClose }: { leadId: string; offers: Offer[]; classes: { id: string; label: string; price: number | null }[]; isOwner: boolean; origin: string; depositPct: number; canClose: boolean }) {
+export function LeadOffers({ leadId, offers, classes, isOwner, origin, depositPct, canClose, members, meId }: { leadId: string; offers: Offer[]; classes: { id: string; label: string; price: number | null }[]; isOwner: boolean; origin: string; depositPct: number; canClose: boolean; members: Member[]; meId: string }) {
   return (
     <div>
       <h2 className="h2 mt-5" style={{ fontSize: 15 }}>Gửi offer</h2>
@@ -53,6 +55,7 @@ export function LeadOffers({ leadId, offers, classes, isOwner, origin, depositPc
       {canClose && (
         <ActionForm action={createOffer} className="grid gap-2">
           <input type="hidden" name="lead_id" value={leadId} />
+          <CloserSelect members={members} defaultValue={meId} />
           <select name="class_id" className="input" style={{ height: 40 }} aria-label="Lớp" defaultValue="">
             <option value="">Chưa có lớp (ghi tên khoá bên dưới)</option>
             {classes.map((c) => (

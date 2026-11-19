@@ -4,7 +4,7 @@ import { ActionForm, Submit } from "@/components/action-form";
 import { PageHead } from "@/components/admin-shell";
 import { Icon } from "@/components/icon";
 import { graduate, updateStudent } from "@/app/quan-ly/_actions/teaching";
-import { requireSession } from "@/lib/auth";
+import { requirePerm } from "@/lib/auth";
 import { GENDERS, genderLabel } from "@/lib/labels";
 import { sessionsLeft, skillProgress, STUDENT_STATUSES } from "@/lib/teaching";
 import { teachingDb } from "@/lib/teaching-data";
@@ -15,10 +15,11 @@ export const metadata = { title: "Hồ sơ học viên" };
 export default async function HoSoHocVienPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ tot_nghiep?: string; chung_nhan?: string; sua?: string }> }) {
   const { id } = await params;
   const sp = await searchParams;
-  const session = await requireSession();
+  const session = await requirePerm("hoc-vien");
   const t = await teachingDb(session.coach.id);
   const st = await t.studentById(id);
   if (!st) notFound();
+  const canEdit = session.perms.includes("hoc-vien-sua");
   const [enrollments, attendance, feedback, classes] = await Promise.all([t.enrollmentsOfStudent(id), t.attendanceOfStudent(id), t.feedbackOfStudent(id), t.classes()]);
   const sessions = await t.sessionsOfClasses(enrollments.map((e) => e.class_id));
   const sessionOf = (sid: string) => sessions.find((s) => s.id === sid);
@@ -47,7 +48,7 @@ export default async function HoSoHocVienPage({ params, searchParams }: { params
             <Icon name="chat" size={16} /> Zalo
           </a>
         )}
-        {current && (
+        {current && canEdit && (
           <Link href={`/quan-ly/hoc-vien/${id}?tot_nghiep=${current.id}#tot-nghiep`} className="btn primary sm">Tốt nghiệp khoá</Link>
         )}
       </PageHead>
@@ -73,7 +74,7 @@ export default async function HoSoHocVienPage({ params, searchParams }: { params
         </section>
       )}
 
-      {gradTarget && (
+      {gradTarget && canEdit && (
         <ActionForm action={graduate} className="card mb-4 grid gap-3.5">
           <h2 className="h2 mb-0" id="tot-nghiep">Tốt nghiệp khoá · {classOf(gradTarget.class_id)?.title}</h2>
           <input type="hidden" name="enrollment_id" value={gradTarget.id} />
@@ -150,6 +151,7 @@ export default async function HoSoHocVienPage({ params, searchParams }: { params
             })}
           </section>
 
+          {canEdit && (
           <section className="card">
             <details open={Boolean(sp.sua)}>
               <summary className="h2 mb-0 cursor-pointer">Thông tin học viên <span className="text-[13px] font-medium text-navy">Sửa</span></summary>
@@ -181,6 +183,7 @@ export default async function HoSoHocVienPage({ params, searchParams }: { params
             </details>
             {st.lead_id && <Link href={`/quan-ly/nhu-cau?id=${st.lead_id}#chi-tiet`} className="mt-3 inline-block text-[13px] font-semibold text-navy">Xem nhu cầu ban đầu ›</Link>}
           </section>
+          )}
         </div>
       </div>
     </>

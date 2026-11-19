@@ -28,33 +28,44 @@ const day = (iso: string) => new Date(iso).toLocaleDateString("vi-VN", { day: "2
 export type ContentData = { groups: VideoGroupAdmin[]; videos: VideoAdmin[]; posts: PostAdmin[]; reviews: ReviewAdmin[]; courses: CourseOption[] };
 export type ContentParams = { tab?: string; v?: string; them?: string; id?: string; moi?: string };
 
-export function ContentView({ data, params }: { data: ContentData; params: ContentParams }) {
-  const tab: ContentTab = CONTENT_TABS.some((t) => t.value === params.tab) ? (params.tab as ContentTab) : "video";
+/** Giáo án (Video, Bài viết) ở mục Lớp & khoá học; Đánh giá ở mục Học viên. */
+export function ContentView({ data, params, only }: { data: ContentData; params: ContentParams; only?: "danh-gia" }) {
+  if (only === "danh-gia") {
+    const shown = data.reviews.filter((r) => r.is_public).length;
+    return (
+      <>
+        <PageHead icon="star" color="violet" title="Đánh giá" sub={`${data.reviews.length} đánh giá · ${shown} đang hiện trên trang công khai`}>
+          <a href="#form-danh-gia" className="btn primary">
+            <Icon name="plus" /> Thêm đánh giá
+          </a>
+        </PageHead>
+        <ReviewTab data={data} />
+      </>
+    );
+  }
+  const tabs = CONTENT_TABS.filter((t) => t.value !== "danh-gia");
+  const tab: ContentTab = tabs.some((t) => t.value === params.tab) ? (params.tab as ContentTab) : "video";
   const published = data.posts.filter((p) => p.status === "da-dang").length;
-  const sub = `${data.videos.length} video · ${published} bài đã đăng · ${data.reviews.length} đánh giá`;
+  const sub = `${data.videos.length} video · ${published} bài đã đăng`;
   const act =
     tab === "video" ? (
       <Link href={`${BASE}?them=1#form-video`} className="btn primary">
         <Icon name="plus" /> Thêm video
       </Link>
-    ) : tab === "bai-viet" ? (
+    ) : (
       <Link href={`${BASE}?tab=bai-viet&moi=1`} className="btn primary">
         <Icon name="pen" /> Viết bài
-      </Link>
-    ) : (
-      <Link href={`${BASE}?tab=danh-gia#form-danh-gia`} className="btn primary">
-        <Icon name="plus" /> Thêm đánh giá
       </Link>
     );
 
   return (
     <>
-      <PageHead icon="video" color="orange" title="Nội dung" sub={sub}>
+      <PageHead icon="video" color="orange" title="Giáo án" sub={sub}>
         {act}
       </PageHead>
       <div className="mb-4">
         <nav className="seg" aria-label="Loại nội dung">
-          {CONTENT_TABS.map((t) => (
+          {tabs.map((t) => (
             <Link key={t.value} href={t.value === "video" ? BASE : `${BASE}?tab=${t.value}`} className={t.value === tab ? "on" : ""}>
               {t.label}
             </Link>
@@ -63,7 +74,6 @@ export function ContentView({ data, params }: { data: ContentData; params: Conte
       </div>
       {tab === "video" && <VideoTab data={data} editId={params.v} adding={Boolean(params.them)} />}
       {tab === "bai-viet" && <PostTab data={data} editId={params.id} writing={Boolean(params.moi)} />}
-      {tab === "danh-gia" && <ReviewTab data={data} />}
     </>
   );
 }

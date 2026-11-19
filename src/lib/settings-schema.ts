@@ -181,16 +181,27 @@ const email = z
 export const memberSchema = z.object({
   user_id: id,
   display_name: nullText(60),
-  role: z.enum(["owner", "sale", "tro-giang"], { error: "Vai trò chưa đúng" }),
-  commission_pct: z.preprocess((v) => (blank(v) ? 0 : decLike(v)), num(0, 100, "Hoa hồng từ 0 đến 100%")),
-  wage_per_session: z.preprocess((v) => (blank(v) ? 0 : intLike(v)), num(0, 100_000_000, "Lương mỗi buổi chưa đúng").int("Lương mỗi buổi chưa đúng")),
+  roles: z
+    .array(z.enum(["chu", "quan-ly", "co-dong", "coach", "sale", "tro-giang"], { error: "Vai trò chưa đúng" }))
+    .min(1, "Chọn ít nhất một vai trò")
+    .transform((r) => [...new Set(r)]),
 });
 
 export const inviteSchema = z.object({
   email,
-  role: z.enum(["sale", "tro-giang"], { error: "Bạn chọn vai trò nhé" }),
+  roles: z
+    .array(z.enum(["quan-ly", "co-dong", "coach", "sale", "tro-giang"], { error: "Vai trò chưa đúng" }))
+    .min(1, "Chọn ít nhất một vai trò")
+    .transform((r) => [...new Set(r)]),
   display_name: nullText(60),
 });
+
+/** Vai trò chính ghi vào cột role cũ (khớp hàm sync_member_role trong database). */
+export function primaryRole(roles: string[]): "owner" | "quan-ly" | "coach" | "sale" | "tro-giang" | "co-dong" {
+  if (roles.includes("chu")) return "owner";
+  for (const r of ["quan-ly", "coach", "sale", "tro-giang"] as const) if (roles.includes(r)) return r;
+  return "co-dong";
+}
 
 export const joinSchema = z.object({
   email,

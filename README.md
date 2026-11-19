@@ -37,7 +37,11 @@ Chạy theo thứ tự, mỗi file một lần. Nếu Supabase hiện cảnh bá
 7. `supabase/migrations/20261120000000_settings_content.sql` — mời thành viên, mẫu tin nhắn, cột sân
 8. `supabase/migrations/20261121000000_course_kind_nhom.sql` — thêm loại khoá "Nhóm nhỏ"
 9. `supabase/migrations/20261122000000_stats_as_text.sql` — số liệu nổi bật của coach là chữ tự do
-10. `supabase/seed.sql` — nội dung mẫu (chạy lại nhiều lần cũng không sao). Sinh lại bằng `npm run seed:gen`.
+10. `supabase/migrations/20261123000000_roles_team.sql` — nhiều vai trò, người dạy / dạy thay, người chốt, quản lý xác nhận xếp lớp, quyền theo vai trò
+11. `supabase/migrations/20261124000000_split_engine.sql` — bộ máy chia tiền: tỉ lệ & cổ đông, bút toán chia theo buổi × học viên (tự ghi khi điểm danh / hoàn tất buổi)
+12. `supabase/migrations/20261125000000_month_close_funds.sql` — chốt tháng, bảng phải trả, nhật ký sửa, điều chỉnh tháng sau, các quỹ, trợ giảng, kho ảnh chứng từ riêng tư `chung-tu`
+13. `supabase/migrations/20261126000000_reports.sql` — số tổng cho Báo cáo lãi / lỗ (quản lý, cổ đông xem được) và Hiệu suất coach
+14. `supabase/seed.sql` — nội dung mẫu (chạy lại nhiều lần cũng không sao). Sinh lại bằng `npm run seed:gen`.
 
 ### Dữ liệu demo (tuỳ chọn)
 
@@ -81,3 +85,35 @@ Giao diện bám bộ mẫu 20 màn (đặc tả mục 4 và 5).
 - Học viên đăng nhập xem lịch, nhận xét, video riêng; quét QR điểm danh.
 - Đối soát chuyển khoản tự động với ngân hàng; tên miền riêng (làm tay trong Vercel theo hướng dẫn ở Cài đặt).
 - Quyền theo vai trò và chia nhu cầu xoay vòng mới được ghi nhận, chưa chặn / chia tự động.
+
+## Menu khu quản lý
+
+Menu trái chia 3 nhóm: **Hằng ngày** (Tổng quan, Lịch, Học viên, Lớp & khoá học), **Kinh doanh** (Tuyển sinh, Tài chính, Thống kê), **Trung tâm** (Đội ngũ, Cài đặt). Bấm một mục để mở các mục con; trên điện thoại, mục con là dải tab ngang đầu trang. Khai báo menu ở `src/lib/menu.ts`; mục con chưa có trang hiện "Sắp có".
+
+## Vai trò và quyền
+
+Một người có thể có nhiều vai trò (Cài đặt › Phân quyền): **Coach chủ**, **Quản lý đào tạo**, **Cổ đông**, **Coach**, **Sale**, **Trợ giảng**. Quyền của từng vai trò khai báo ở `src/lib/permissions.ts`; menu, từng trang và từng server action kiểm tra bằng `requirePerm()`, còn database chặn bằng RLS (`has_any_role`, `works_in_session`…). Trợ giảng không đọc trực tiếp bảng học viên / lớp; danh sách học viên của buổi lấy qua hàm `session_roster()` (không có số điện thoại, học phí, ghi chú).
+
+Tuyển sinh: chỉ chuyển sang **Đã chốt** qua nút Chốt / xác nhận tiền offer, bắt buộc chọn **người chốt** (database cũng chặn). Người chốt được lưu theo từng đăng ký học viên × lớp. Sau khi chốt, nhu cầu nằm ở Cần xử lý của quản lý đào tạo cho tới khi bấm "Xác nhận đã xếp lớp".
+
+## Chia tiền theo buổi
+
+Mỗi buổi học (không phải học thử, không bị huỷ) có học viên bị trừ buổi theo Quy định lớp sinh **bút toán** cho từng học viên: khoản đem chia = phí buổi (trả theo buổi) hoặc giá gói ÷ số buổi (làm tròn xuống). Khoản này chia theo tỉ lệ ở Cài đặt › Tỉ lệ chia & cổ đông (mặc định sale 10%, coach đứng lớp 50%, quỹ dự phòng 5%, quỹ vận hành 10%, quỹ phát triển 5%, cổ đông 20%). Mỗi phần làm tròn xuống, phần lẻ vào quỹ vận hành. Sale = người chốt của đăng ký; coach = người dạy thực tế của buổi (kể cả dạy thay).
+
+Database tự ghi lại bút toán (`regen_session_split`) khi đổi điểm danh, trạng thái / người dạy / giờ của buổi, học phí / số buổi / người chốt của đăng ký, hoặc tỉ lệ — trừ khi tháng đó đã chốt (`split_months`). Bút toán không ai ghi tay qua API; coach chủ thấy hết, người khác chỉ thấy phần của mình. Kiểm tra trên Postgres thử: `psql -v ON_ERROR_STOP=1 -f supabase/tests/split_engine_test.sql`.
+
+### Chốt tháng, chi trả, quỹ, trợ giảng
+
+- **Chốt tháng** (Tài chính › Chia tiền tháng, chỉ coach chủ): tính lại cả tháng, khoá số (`split_months`) và lập bảng phải trả (`split_payouts`) — mỗi người một dòng gộp phần dạy, chốt, cổ đông, trợ giảng, điều chỉnh tháng trước; mỗi quỹ một dòng.
+- **Chi trả**: đánh dấu đã trả kèm ảnh chuyển khoản. Sau khi chốt chỉ coach chủ sửa số, bắt buộc lý do, ghi `split_audit` (ai, lúc nào, số cũ, số mới). Khoản đã trả mà sửa thì chênh lệch thành điều chỉnh tháng sau (`split_adjustments`).
+- **Các quỹ**: số dư = phần vào từ bút toán chia − khoản chi (`fund_expenses`, có loại, ngày, ghi chú, ảnh chứng từ). Quảng cáo chi từ quỹ dự phòng; tiền sân / bóng lớp đặc thù chi từ quỹ vận hành (database chặn sai quỹ).
+- **Trợ giảng** (ngoài 6 phần): cơ chế theo lớp (tiền / buổi, tiền / tháng), học viên đã trả, đã chuyển cho trợ giảng + ảnh.
+- Ảnh lưu ở kho riêng tư `chung-tu` của Supabase Storage, xem qua đường dẫn ký tạm 1 giờ.
+- Kiểm tra: `psql -v ON_ERROR_STOP=1 -f supabase/tests/month_close_test.sql`.
+
+### Báo cáo và thống kê
+
+- **Báo cáo lãi / lỗ** (coach chủ, quản lý, cổ đông): theo buổi đã dạy — doanh thu đã dạy − coach − sale = phần trung tâm giữ; lãi / lỗ = cổ đông nhận + quỹ tăng thêm (vào − chi quỹ) + (học viên trả trợ giảng − phải trả trợ giảng). Số lấy qua hàm `split_summary` nên quản lý / cổ đông không thấy học phí từng học viên.
+- **Thống kê** (coach chủ): Doanh thu, Tuyển sinh (phễu, nguồn, theo người chốt), Học viên (mới, chuyên cần, học tiếp, DUPR), Hiệu suất coach (buổi, dạy thay, lượt học viên, doanh thu, phần coach).
+- **Thu nhập của tôi** (coach, sale, trợ giảng): phần dạy, phần chốt, trợ giảng của tháng (tạm tính tới khi chốt) và lịch sử chi trả. **Phần của tôi** (cổ đông): phần cổ đông theo tháng; cần gắn tài khoản cho cổ đông ở Cài đặt › Tỉ lệ chia & cổ đông.
+- Tab "Lương & hoa hồng" cũ trong Sổ thu chi đã bỏ: hoa hồng theo % offer được thay bằng 10% theo buổi cho người chốt.

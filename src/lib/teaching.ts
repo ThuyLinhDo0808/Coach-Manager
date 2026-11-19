@@ -26,6 +26,10 @@ export type ClassRow = {
   is_recruiting: boolean;
   status: ClassStatus;
   created_at: string;
+  main_coach_id: string | null;
+  assistant_id: string | null;
+  /** Lớp đặc thù: trung tâm chịu tiền sân / bóng. */
+  center_pays_court: boolean;
 };
 
 export type SessionRow = {
@@ -42,6 +46,9 @@ export type SessionRow = {
   plan: string | null;
   status: "du-kien" | "da-day" | "huy";
   completed_at: string | null;
+  /** Người dạy thực tế (dạy thay khi khác coach dạy chính của lớp). */
+  teacher_id: string | null;
+  assistant_id: string | null;
 };
 
 export type StudentStatus = "dang-hoc" | "da-hoc" | "da-nghi";
@@ -74,10 +81,15 @@ export type Enrollment = {
   status: "dang-hoc" | "tot-nghiep" | "nghi";
   sessions_total: number | null;
   price: number | null;
+  /** Học viên trả theo buổi: phí mỗi buổi (đem chia mỗi buổi thay cho giá gói ÷ số buổi). */
+  price_per_session?: number | null;
   final_dupr: number | null;
   final_note: string | null;
   final_video_url: string | null;
   graduated_at: string | null;
+  /** Người chốt (sale nhận 10% khi chia tiền buổi). */
+  closer_id: string | null;
+  created_at?: string;
 };
 
 export type AttendanceStatus = "co-mat" | "vang" | "bao-nghi";

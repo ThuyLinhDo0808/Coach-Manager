@@ -63,3 +63,11 @@ export function avgDuprGain(grads: { final_dupr: number | null; start: number | 
   const gains = grads.filter((g) => g.final_dupr != null && g.start != null).map((g) => Number(g.final_dupr) - Number(g.start));
   return gains.length ? Math.round((gains.reduce((s, g) => s + g, 0) / gains.length) * 10) / 10 : null;
 }
+
+export const STAT_RANGES = [3, 6, 12];
+/** Khoảng tháng của trang thống kê / báo cáo: n tháng gần nhất tính cả tháng này. */
+export function statRange(raw: string | undefined, thisMonth: string) {
+  const n = STAT_RANGES.includes(Number(raw)) ? Number(raw) : 6;
+  const months = lastMonths(thisMonth, n);
+  return { n, months, first: months[0], last: thisMonth };
+}

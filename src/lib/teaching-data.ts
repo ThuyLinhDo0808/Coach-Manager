@@ -1,4 +1,5 @@
 import "server-only";
+import type { Role } from "@/lib/permissions";
 import { serverClient } from "@/lib/supabase/server";
 import type { Attendance, ClassRow, Enrollment, Feedback, FreeSlot, SessionRow, Student } from "@/lib/teaching";
 import type { Venue } from "@/lib/types";
@@ -23,6 +24,11 @@ export async function teachingDb(coachId: string) {
       }[],
     sessionsBetween: async (from: string, to: string) =>
       must(await db.from("class_sessions").select("*").eq("coach_id", coachId).gte("starts_at", from).lt("starts_at", to).order("starts_at")) as SessionRow[],
+    /** Buổi người này dạy hoặc làm trợ giảng trong khoảng thời gian. */
+    sessionsOfPerson: async (userId: string, from: string, to: string) =>
+      must(
+        await db.from("class_sessions").select("*").eq("coach_id", coachId).or(`teacher_id.eq.${userId},assistant_id.eq.${userId}`).gte("starts_at", from).lt("starts_at", to).order("starts_at"),
+      ) as SessionRow[],
     sessionsOfClass: async (classId: string) =>
       must(await db.from("class_sessions").select("*").eq("coach_id", coachId).eq("class_id", classId).order("starts_at")) as SessionRow[],
     sessionsOfClasses: async (classIds: string[]) =>
@@ -37,6 +43,15 @@ export async function teachingDb(coachId: string) {
     enrollments: async () => must(await db.from("enrollments").select("*").eq("coach_id", coachId)) as Enrollment[],
     enrollmentsOfClass: async (classId: string) => must(await db.from("enrollments").select("*").eq("coach_id", coachId).eq("class_id", classId)) as Enrollment[],
     enrollmentsOfStudent: async (studentId: string) => must(await db.from("enrollments").select("*").eq("coach_id", coachId).eq("student_id", studentId)) as Enrollment[],
+    attendanceOfSessions: async (ids: string[]) =>
+      ids.length ? (must(await db.from("attendance").select("session_id, student_id, status").in("session_id", ids)) as Attendance[]) : [],
+    /** Danh sách học viên của buổi (tên, buổi đã dùng, điểm danh) — không có SĐT, học phí, ghi chú. */
+    roster: async (sessionId: string) =>
+      must(await db.rpc("session_roster", { p_session: sessionId })) as { student_id: string; full_name: string; sessions_total: number | null; used: number; attendance: string | null }[],
+    members: async () =>
+      must(await db.from("coach_members").select("user_id, role, roles, display_name").eq("coach_id", coachId).order("created_at")) as {
+        user_id: string; role: string; roles: string[] | null; display_name: string | null;
+      }[],
     attendanceOfSession: async (sessionId: string) => must(await db.from("attendance").select("session_id, student_id, status").eq("session_id", sessionId)) as Attendance[],
     attendanceOfStudent: async (studentId: string) => must(await db.from("attendance").select("session_id, student_id, status").eq("coach_id", coachId).eq("student_id", studentId)) as Attendance[],
     attendanceAll: async () => must(await db.from("attendance").select("session_id, student_id, status").eq("coach_id", coachId)) as Attendance[],
@@ -48,3 +63,15 @@ export async function teachingDb(coachId: string) {
     videos: async () => must(await db.from("videos").select("id, title").eq("coach_id", coachId).order("sort")) as { id: string; title: string }[],
   };
 }
+
+export type Person = { id: string; name: string; roles: Role[] };
+
+/** Thành viên đội kèm vai trò (để chọn coach dạy, trợ giảng, người chốt). */
+export function peopleOf(members: { user_id: string; role: string; roles: string[] | null; display_name: string | null }[]): Person[] {
+  return members.map((m) => ({
+    id: m.user_id,
+    name: m.display_name ?? "Thành viên",
+    roles: (m.roles?.length ? m.roles : m.role === "owner" ? ["chu", "coach"] : [m.role]) as Role[],
+  }));
+}
+export const withRole = (people: Person[], ...roles: Role[]) => people.filter((p) => p.roles.some((r) => roles.includes(r)));

@@ -1,20 +1,19 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
 import { ActionForm, Submit } from "@/components/action-form";
 import { PageHead } from "@/components/admin-shell";
 import { Icon } from "@/components/icon";
 import { addLedgerEntry, cancelOffer, confirmOffer, deleteLedgerEntry } from "@/app/quan-ly/_actions/money";
 import { getLeads, getMembers } from "@/lib/admin-data";
-import { requireSession } from "@/lib/auth";
-import { categoryLabel, dong, isMonth, LEDGER_CATEGORIES, monthRange, profitByClass, shiftMonth, totals, trieu } from "@/lib/money";
+import { requirePerm } from "@/lib/auth";
+import { studentDebts, categoryLabel, dong, isMonth, LEDGER_CATEGORIES, monthRange, profitByClass, shiftMonth, totals, trieu } from "@/lib/money";
 import { moneyDb } from "@/lib/money-data";
 import { teachingDb } from "@/lib/teaching-data";
-import { dmy, vnDate, vnIso } from "@/lib/time";
+import { dmy, vnDate } from "@/lib/time";
 import { ROLE_LABEL } from "@/lib/types";
 
-export const metadata = { title: "Thu chi" };
+export const metadata = { title: "Sổ thu chi" };
 
-const TABS = [["so", "Sổ thu chi"], ["cho", "Chờ xác nhận"], ["luong", "Lương & hoa hồng"]] as const;
+const TABS = [["so", "Sổ thu chi"], ["cho", "Chờ xác nhận"]] as const;
 
 function Amount({ kind, amount }: { kind: "thu" | "chi"; amount: number }) {
   return (
@@ -26,17 +25,16 @@ function Amount({ kind, amount }: { kind: "thu" | "chi"; amount: number }) {
 
 export default async function ThuChiPage({ searchParams }: { searchParams: Promise<{ thang?: string; tab?: string; loc?: string; them?: string }> }) {
   const sp = await searchParams;
-  const session = await requireSession();
-  if (session.role !== "owner") redirect("/quan-ly");
+  const session = await requirePerm("tai-chinh");
   const month = isMonth(sp.thang) ? sp.thang : vnDate().slice(0, 7);
   const prev = shiftMonth(month, -1);
   const tab = TABS.some(([v]) => v === sp.tab) ? sp.tab! : "so";
   const m = await moneyDb(session.coach.id);
   const t = await teachingDb(session.coach.id);
   const { from, to } = monthRange(month);
-  const [rows, prevRows, open, classes, students, enrollments, allLedger, members, leads, confirmed] = await Promise.all([
+  const [rows, prevRows, open, classes, students, enrollments, allLedger, members, leads] = await Promise.all([
     m.ledgerBetween(from, to), m.ledgerBetween(monthRange(prev).from, from), m.offersOpen(), t.classes(), t.students(), t.enrollments(),
-    m.ledgerAllThu(), getMembers(session.coach.id), getLeads(session.coach.id), m.offersConfirmedBetween(vnIso(from, "00:00"), vnIso(to, "00:00")),
+    m.ledgerAllThu(), getMembers(session.coach.id), getLeads(session.coach.id),
   ]);
   const sum = totals(rows);
   const prevNet = totals(prevRows).net;
@@ -48,19 +46,7 @@ export default async function ThuChiPage({ searchParams }: { searchParams: Promi
   };
   const leadName = (id: string) => leads.find((l) => l.id === id)?.full_name ?? "—";
 
-  // Công nợ: học phí thoả thuận của các lớp đang học / đã tốt nghiệp − số đã thu của học viên.
-  const paidBy = new Map<string, number>();
-  for (const r of allLedger) {
-    if (!r.student_id) continue;
-    paidBy.set(r.student_id, (paidBy.get(r.student_id) ?? 0) + (r.kind === "thu" ? r.amount : r.category === "hoan-tien" ? -r.amount : 0));
-  }
-  const debts = students
-    .map((s) => {
-      const owed = enrollments.filter((e) => e.student_id === s.id && e.status !== "nghi").reduce((n, e) => n + (e.price ?? 0), 0);
-      return { s, debt: owed - (paidBy.get(s.id) ?? 0) };
-    })
-    .filter((x) => x.debt > 0)
-    .sort((a, b) => b.debt - a.debt);
+  const debts = studentDebts(students, enrollments, allLedger);
   const debtTotal = debts.reduce((n, d) => n + d.debt, 0);
 
   const filter = sp.loc === "thu" || sp.loc === "chi" ? sp.loc : null;
@@ -73,19 +59,9 @@ export default async function ThuChiPage({ searchParams }: { searchParams: Promi
   };
   const [y, mm] = month.split("-");
 
-  // Hoa hồng sale: % × học phí các offer đã xác nhận trong tháng của nhu cầu do sale đó phụ trách.
-  const commission = members
-    .filter((x) => x.role === "sale")
-    .map((x) => {
-      const mine = confirmed.filter((o) => leads.find((l) => l.id === o.lead_id)?.assigned_to === x.user_id);
-      const revenue = mine.reduce((n, o) => n + o.amount, 0);
-      const pct = Number(x.commission_pct ?? 0);
-      return { x, count: mine.length, revenue, pct, due: Math.round((revenue * pct) / 100) };
-    });
-
   return (
     <>
-      <PageHead icon="wallet" color="emerald" title="Thu chi" sub={`Tháng ${mm}/${y}`}>
+      <PageHead icon="wallet" color="emerald" title="Sổ thu chi" sub={`Tháng ${mm}/${y}`}>
         <a href={`/quan-ly/thu-chi/xuat?thang=${month}`} className="btn sm glass">Xuất Excel</a>
         <Link href={href({ them: "1", tab: "so" })} className="btn primary">
           <Icon name="plus" /> Thêm khoản
@@ -99,7 +75,7 @@ export default async function ThuChiPage({ searchParams }: { searchParams: Promi
               {l}{v === "cho" && open.length ? ` ${open.length}` : ""}
             </Link>
           ))}
-          <Link href="/quan-ly/cai-dat/nhan-tien">Nhận tiền</Link>
+          <Link href="/quan-ly/cai-dat/nhan-tien">Thanh toán</Link>
         </div>
         <div className="flex items-center gap-2">
           <Link href={href({ thang: prev })} className="btn sm ghost bg-white" aria-label="Tháng trước">‹</Link>
@@ -112,7 +88,7 @@ export default async function ThuChiPage({ searchParams }: { searchParams: Promi
         <div className="card kpi"><div className="l">Thu</div><div className="v" style={{ fontSize: 24, color: "var(--color-good)" }}>{dong(sum.thu)}</div><div className="s">{rows.filter((r) => r.kind === "thu").length} khoản</div></div>
         <div className="card kpi"><div className="l">Chi</div><div className="v" style={{ fontSize: 24, color: "var(--color-bad)" }}>{dong(sum.chi)}</div><div className="s">{rows.filter((r) => r.kind === "chi").length} khoản</div></div>
         <div className="card kpi"><div className="l">Còn lại</div><div className="v" style={{ fontSize: 24 }}>{dong(sum.net)}</div><div className="s">{change != null ? `${change >= 0 ? "+" : ""}${change}% so với tháng ${prev.slice(5)}` : "chưa có số tháng trước"}</div></div>
-        <div className="card kpi"><div className="l">Học viên còn nợ</div><div className="v" style={{ fontSize: 24, color: debtTotal ? "var(--color-warn)" : undefined }}>{dong(debtTotal)}</div><div className="s">{debts.length} người</div></div>
+        <Link href="/quan-ly/thu-chi/cong-no" className="card kpi"><div className="l">Học viên còn nợ</div><div className="v" style={{ fontSize: 24, color: debtTotal ? "var(--color-warn)" : undefined }}>{dong(debtTotal)}</div><div className="s">{debts.length} người · xem chi tiết</div></Link>
       </div>
 
       {sp.them && tab === "so" && (
@@ -207,17 +183,6 @@ export default async function ThuChiPage({ searchParams }: { searchParams: Promi
                 </table>
               )}
             </div>
-            {debts.length > 0 && (
-              <div className="card">
-                <h2 className="h2">Công nợ học viên</h2>
-                {debts.slice(0, 8).map((d, i) => (
-                  <Link key={d.s.id} href={`/quan-ly/hoc-vien/${d.s.id}`} className={`flex items-center justify-between gap-2 py-2 ${i ? "divide-row" : ""}`}>
-                    <b>{d.s.full_name}</b><span className="num font-bold text-warn">{dong(d.debt)}</span>
-                  </Link>
-                ))}
-                <div className="mt-2 text-xs text-faint">Nợ = học phí thoả thuận của các lớp − số đã thu gắn với học viên.</div>
-              </div>
-            )}
           </div>
         </div>
       )}
@@ -240,29 +205,6 @@ export default async function ThuChiPage({ searchParams }: { searchParams: Promi
             </div>
           ))}
           <p className="mt-3 text-xs text-faint">Kiểm tra app ngân hàng theo nội dung chuyển khoản rồi mới bấm Xác nhận tiền. Web không tự đối soát với ngân hàng.</p>
-        </div>
-      )}
-
-      {tab === "luong" && (
-        <div className="card">
-          <h2 className="h2">Hoa hồng sale · tháng {mm}</h2>
-          {commission.length === 0 ? (
-            <div className="text-muted">Chưa có sale nào trong đội.</div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="tbl">
-                <thead><tr><th>Sale</th><th className="text-right!">Khoá chốt</th><th className="text-right!">Học phí</th><th className="text-right!">Tỷ lệ</th><th className="text-right!">Hoa hồng</th></tr></thead>
-                <tbody>
-                  {commission.map((c) => (
-                    <tr key={c.x.user_id}><td className="font-semibold">{c.x.display_name ?? "Sale"}</td><td className="num text-right">{c.count}</td><td className="num text-right">{dong(c.revenue)}</td><td className="num text-right">{c.pct}%</td><td className="num text-right font-bold">{dong(c.due)}</td></tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-          <p className="mt-3 text-xs text-faint">
-            Tính trên các offer đã xác nhận tiền trong tháng của nhu cầu do sale phụ trách. Khi trả, ghi một khoản chi loại “Hoa hồng”. Lương trợ giảng theo buổi chưa tự tính vì buổi học chưa gắn trợ giảng: ghi tay khoản chi loại “Lương”.
-          </p>
         </div>
       )}
     </>

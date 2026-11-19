@@ -6,6 +6,7 @@ import {
   courseSchema,
   domainSchema,
   inviteSchema,
+  primaryRole,
   joinSchema,
   memberSchema,
   normalizeDomain,
@@ -166,15 +167,25 @@ describe("payoutSchema", () => {
 });
 
 describe("thành viên và lời mời", () => {
-  it("email lời mời về chữ thường, không mời được owner", () => {
-    expect(inviteSchema.parse({ email: " Hanh@Email.COM ", role: "sale", display_name: "" })).toEqual({ email: "hanh@email.com", role: "sale", display_name: null });
-    expect(inviteSchema.safeParse({ email: "a@b.vn", role: "owner", display_name: "" }).success).toBe(false);
-    expect(inviteSchema.safeParse({ email: "khong-phai-email", role: "sale", display_name: "" }).success).toBe(false);
+  it("email lời mời về chữ thường, nhiều vai trò, không mời được coach chủ", () => {
+    expect(inviteSchema.parse({ email: " Hanh@Email.COM ", roles: ["sale", "coach", "sale"], display_name: "" })).toEqual({
+      email: "hanh@email.com",
+      roles: ["sale", "coach"],
+      display_name: null,
+    });
+    expect(inviteSchema.safeParse({ email: "a@b.vn", roles: ["chu"], display_name: "" }).success).toBe(false);
+    expect(inviteSchema.safeParse({ email: "a@b.vn", roles: [], display_name: "" }).success).toBe(false);
+    expect(inviteSchema.safeParse({ email: "khong-phai-email", roles: ["sale"], display_name: "" }).success).toBe(false);
   });
-  it("hoa hồng, lương: để trống là 0, nhận dấu phẩy", () => {
-    expect(memberSchema.parse({ user_id: ID, display_name: "Hạnh", role: "sale", commission_pct: "7,5", wage_per_session: "" })).toMatchObject({ commission_pct: 7.5, wage_per_session: 0 });
-    expect(memberSchema.safeParse({ user_id: ID, display_name: "", role: "sale", commission_pct: "101", wage_per_session: "0" }).success).toBe(false);
-    expect(memberSchema.safeParse({ user_id: "abc", display_name: "", role: "sale", commission_pct: "0", wage_per_session: "0" }).success).toBe(false);
+  it("thành viên: ít nhất một vai trò, mã đúng dạng", () => {
+    expect(memberSchema.parse({ user_id: ID, display_name: "Linh", roles: ["quan-ly", "co-dong"] })).toMatchObject({ roles: ["quan-ly", "co-dong"] });
+    expect(memberSchema.safeParse({ user_id: ID, display_name: "", roles: [] }).success).toBe(false);
+    expect(memberSchema.safeParse({ user_id: "abc", display_name: "", roles: ["sale"] }).success).toBe(false);
+  });
+  it("vai trò chính khớp database", () => {
+    expect(primaryRole(["coach", "chu"])).toBe("owner");
+    expect(primaryRole(["co-dong", "quan-ly"])).toBe("quan-ly");
+    expect(primaryRole(["co-dong"])).toBe("co-dong");
   });
   it("mật khẩu tham gia ít nhất 8 ký tự", () => {
     expect(joinSchema.safeParse({ email: "a@b.vn", password: "1234567" }).success).toBe(false);

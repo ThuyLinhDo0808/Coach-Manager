@@ -3,7 +3,7 @@ import { requireOwner } from "@/lib/owner";
 import { getSettings } from "@/lib/settings";
 import { getMemberRows, getPendingInvites } from "@/lib/settings-data";
 
-export const metadata = { title: "Thành viên & quyền" };
+export const metadata = { title: "Phân quyền" };
 
 export default async function ThanhVienPage({ searchParams }: { searchParams: Promise<{ sua?: string }> }) {
   const { sua } = await searchParams;

@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { requireSession } from "@/lib/auth";
+import { requirePerm } from "@/lib/auth";
 import { LEDGER_CATEGORIES, memoCode, offerAmounts } from "@/lib/money";
 import { getSettings } from "@/lib/settings";
 import { serverClient } from "@/lib/supabase/server";
@@ -18,7 +18,7 @@ const int = (f: FormData, k: string) => {
 
 /** Gửi offer cho một nhu cầu: tạo link thanh toán, chuyển nhu cầu sang Chờ đóng tiền. */
 export async function createOffer(_p: FormState, f: FormData): Promise<FormState> {
-  const session = await requireSession();
+  const session = await requirePerm("tuyen-sinh");
   const db = await serverClient();
   const leadId = str(f, "lead_id");
   const classId = str(f, "class_id") || null;
@@ -52,6 +52,7 @@ export async function createOffer(_p: FormState, f: FormData): Promise<FormState
     memo: memoCode("CTM"),
     expires_on: isDate(expires) ? expires : addDays(vnDate(), payout.offer_days || 3),
     created_by: session.userId,
+    closer_id: str(f, "closer_id") || session.userId,
   });
   if (error) {
     console.error("createOffer", error);
@@ -67,7 +68,7 @@ export async function createOffer(_p: FormState, f: FormData): Promise<FormState
 }
 
 export async function cancelOffer(f: FormData) {
-  const session = await requireSession();
+  const session = await requirePerm("tuyen-sinh");
   const db = await serverClient();
   const { error } = await db.from("offers").update({ status: "huy" }).eq("id", str(f, "id")).eq("coach_id", session.coach.id).in("status", ["cho", "da-bao"]);
   if (error) throw error;
@@ -76,8 +77,7 @@ export async function cancelOffer(f: FormData) {
 
 /** Coach xác nhận đã nhận tiền: ghi sổ thu, tạo học viên, ghi danh lớp. */
 export async function confirmOffer(f: FormData) {
-  const session = await requireSession();
-  if (session.role !== "owner") return;
+  await requirePerm("tai-chinh");
   const db = await serverClient();
   const { error } = await db.rpc("confirm_offer", { p_offer: str(f, "id") });
   if (error) throw error;
@@ -86,8 +86,7 @@ export async function confirmOffer(f: FormData) {
 }
 
 export async function addLedgerEntry(_p: FormState, f: FormData): Promise<FormState> {
-  const session = await requireSession();
-  if (session.role !== "owner") return { message: "Chỉ coach được ghi sổ thu chi." };
+  const session = await requirePerm("tai-chinh");
   const category = LEDGER_CATEGORIES.find((c) => c.value === str(f, "category"));
   const amount = int(f, "amount");
   const description = str(f, "description", 200);
@@ -118,7 +117,7 @@ export async function addLedgerEntry(_p: FormState, f: FormData): Promise<FormSt
 }
 
 export async function deleteLedgerEntry(f: FormData) {
-  const session = await requireSession();
+  const session = await requirePerm("tai-chinh");
   const db = await serverClient();
   // Khoản sinh ra từ offer đã xác nhận thì không xoá tay, để sổ khớp với học phí đã nhận.
   const { error } = await db.from("ledger").delete().eq("id", str(f, "id")).eq("coach_id", session.coach.id).is("offer_id", null);

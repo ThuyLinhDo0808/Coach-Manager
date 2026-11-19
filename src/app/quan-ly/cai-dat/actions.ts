@@ -9,6 +9,7 @@ import {
   courseSchema,
   domainSchema,
   inviteSchema,
+  primaryRole,
   memberSchema,
   notifySchema,
   payoutSchema,
@@ -168,18 +169,19 @@ export async function saveMember(_prev: FormState, payload: unknown): Promise<Fo
   const parsed = memberSchema.safeParse(payload);
   if (!parsed.success) return invalid(parsed.error);
   const { user_id, ...member } = parsed.data;
-  if (user_id === session.userId && member.role !== "owner") {
-    return { ok: false, message: "Bạn không tự đổi vai trò của chính mình được.", errors: { role: "Nhờ một coach khác đổi giúp" } };
+  if (user_id === session.userId && !member.roles.includes("chu")) {
+    return { ok: false, message: "Bạn không tự bỏ vai trò coach chủ của chính mình được.", errors: { roles: "Giữ vai trò Coach chủ" } };
   }
 
   const supabase = await serverClient();
   const { data, error } = await supabase
     .from("coach_members")
-    .update(member)
+    .update({ display_name: member.display_name, roles: member.roles, role: primaryRole(member.roles) })
     .eq("coach_id", session.coach.id)
     .eq("user_id", user_id)
     .select("user_id");
-  if (error?.message.includes("last_owner")) return { ok: false, message: "Đội cần ít nhất một coach (owner)." };
+  if (error?.message.includes("last_owner")) return { ok: false, message: "Đội cần ít nhất một coach chủ." };
+  if (error?.message.includes("cannot_change_self")) return { ok: false, message: "Bạn không tự bỏ vai trò coach chủ của mình được." };
   if (error || !data.length) return failed("saveMember", error);
   revalidatePath("/quan-ly", "layout");
   return SAVED;
@@ -211,7 +213,9 @@ export async function inviteMember(_prev: FormState, payload: unknown): Promise<
   if (existing?.length || parsed.data.email === session.email.toLowerCase()) {
     return { ok: false, message: "Email này đã ở trong đội rồi.", errors: { email: "Đã là thành viên" } };
   }
-  const { error } = await supabase.from("member_invites").insert({ ...parsed.data, coach_id: session.coach.id, created_by: session.userId });
+  const { error } = await supabase
+    .from("member_invites")
+    .insert({ ...parsed.data, role: primaryRole(parsed.data.roles), coach_id: session.coach.id, created_by: session.userId });
   if (error?.code === "23505") return { ok: false, message: "Email này đã được mời, đang chờ nhận.", errors: { email: "Đã mời rồi" } };
   if (error) return failed("inviteMember", error);
   revalidatePath(`${BASE}/thanh-vien`);
