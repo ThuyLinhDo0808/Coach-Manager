@@ -114,7 +114,33 @@ body {
   .pub-top { height: 60px; background: #fff; display: flex; align-items: center; justify-content: space-between; padding: 0 32px; box-shadow: 0 1px 0 var(--color-line); position: relative; z-index: 2; }
   .logo { display: flex; align-items: center; gap: 8px; font-weight: 800; font-size: 16px; }
   .logo b { width: 28px; height: 28px; border-radius: 8px; background: var(--color-navy); color: var(--color-lime); display: inline-flex; align-items: center; justify-content: center; font-size: 13px; }
+  /* Bài giới thiệu có định dạng (RichText) */
+  .rich { display: grid; gap: 12px; font-size: 15px; line-height: 1.65; color: var(--color-muted); }
+  .rich p, .rich li, .rich blockquote { text-align: justify; text-justify: inter-word; hyphens: auto; }
+  .rich strong { color: var(--color-ink); font-weight: 700; }
+  .rich h3 { font-size: 17px; font-weight: 800; color: var(--color-ink); margin-top: 6px; }
+  .rich ul, .rich ol { display: grid; gap: 6px; padding-left: 22px; }
+  .rich ul { list-style: disc; }
+  .rich ol { list-style: decimal; }
+  .rich li::marker { color: var(--color-lime2); font-weight: 700; }
+  .rich blockquote { border-left: 3px solid var(--color-lime); background: var(--color-page); border-radius: 0 12px 12px 0; padding: 10px 14px; font-style: italic; }
+  .rich figure { margin: 4px 0; }
+  .rich figure img { width: 100%; max-height: 480px; object-fit: cover; border-radius: 16px; }
+  .rich figcaption { margin-top: 6px; font-size: 13px; color: var(--color-faint); text-align: center; }
   .pub-cover { height: 150px; background: var(--grad-navy); position: relative; overflow: hidden; }
+  .gallery { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .gallery a { position: relative; border-radius: 16px; overflow: hidden; background: var(--color-page); }
+  .gallery a.wide { grid-column: 1 / -1; }
+  .gallery img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; display: block; transition: transform 0.3s; }
+  .gallery a.wide img { aspect-ratio: 16 / 7; }
+  .gallery a:hover img { transform: scale(1.03); }
+  .gallery span { position: absolute; left: 0; right: 0; bottom: 0; padding: 18px 12px 8px; font-size: 13px; font-weight: 600; color: #fff; background: linear-gradient(transparent, rgba(0, 0, 0, 0.6)); }
+  .pub-cover.has-img { height: 240px; background-size: cover; background-position: center; }
+  .pub-cover.has-img::after { display: none; }
+  /* Ảnh nền trang công khai: cố định phía sau, phủ lớp sáng để chữ trên thẻ vẫn dễ đọc. */
+  .pub-root { position: relative; isolation: isolate; min-height: 100vh; }
+  .pub-bg { position: fixed; inset: 0; z-index: -1; background-size: cover; background-position: center; }
+  .pub-bg::after { content: ""; position: absolute; inset: 0; background: rgba(245, 245, 247, 0.82); }
   .pub-cover::after { content: ""; position: absolute; right: 60px; top: 20px; width: 360px; height: 110px; border: 2px solid rgba(182, 240, 59, 0.35); }
   .pub-wrap { max-width: 1200px; margin: -80px auto 0; padding: 0 32px 40px; display: grid; grid-template-columns: 340px minmax(0, 1fr); gap: 24px; position: relative; }
   .pcard { position: sticky; top: 16px; align-self: start; text-align: center; }
@@ -155,6 +181,7 @@ body {
     .card { padding: 16px; border-radius: 18px; }
     .pub-top { padding: 0 16px; height: 56px; }
     .pub-cover { height: 110px; }
+    .pub-cover.has-img { height: 160px; }
     .pub-wrap { grid-template-columns: minmax(0, 1fr); margin-top: -60px; padding: 0 16px 96px; gap: 14px; }
     .pcard { position: static; }
     .pcard .avatar { width: 88px; height: 88px; font-size: 28px; }

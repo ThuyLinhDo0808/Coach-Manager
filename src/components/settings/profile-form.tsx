@@ -5,7 +5,8 @@ import { useState } from "react";
 import { saveProfile } from "@/app/quan-ly/cai-dat/actions";
 import { Avatar } from "@/components/avatar";
 import { SaveAct, SaveBar, SaveError, useSave } from "@/components/form-kit";
-import { SettingsShell } from "@/components/settings/shell";
+import { GalleryEditor, ImageUpload, RichEditor } from "@/components/settings/media";
+import { SectionHead, SettingsShell } from "@/components/settings/shell";
 import { Field, LinesEditor, moveItem, RowTools, SegPick, SwitchRow } from "@/components/ui-kit";
 import { ageFromBirthYear, statText } from "@/lib/format";
 import type { Coach } from "@/lib/types";
@@ -37,6 +38,8 @@ function initial(c: Coach) {
     bio: c.bio ?? "",
     avatar_url: c.avatar_url ?? "",
     cover_url: c.cover_url ?? "",
+    bg_url: c.bg_url ?? "",
+    gallery: (c.gallery ?? []).map((g) => ({ url: g.url, caption: g.caption ?? "" })),
     birth_year: c.birth_year ? String(c.birth_year) : "",
     show_age: c.show_age,
     gender: (c.gender === "nam" || c.gender === "nu" ? c.gender : "") as "nam" | "nu" | "",
@@ -67,7 +70,7 @@ export function ProfileForm({ coach }: { coach: Coach }) {
   const save = useSave(saveProfile, v);
   const set = <K extends keyof V>(k: K, val: V[K]) => setV((p) => ({ ...p, [k]: val }));
   const setContact = <K extends keyof V["contacts"]>(k: K, val: V["contacts"][K]) => setV((p) => ({ ...p, contacts: { ...p.contacts, [k]: val } }));
-  const txt = (k: "display_name" | "tagline" | "area" | "avatar_url" | "cover_url" | "birth_year" | "dupr" | (typeof STATS)[number][0]) => ({
+  const txt = (k: "display_name" | "tagline" | "area" | "birth_year" | "dupr" | (typeof STATS)[number][0]) => ({
     value: v[k],
     onChange: (e: React.ChangeEvent<HTMLInputElement>) => set(k, e.target.value),
   });
@@ -94,15 +97,11 @@ export function ProfileForm({ coach }: { coach: Coach }) {
         <div className="grid items-start gap-4 md:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
           <div className="grid min-w-0 gap-4 *:min-w-0">
             <div className="card">
-              <h2 className="h2">Thông tin cơ bản</h2>
-              <div className="mb-3.5 flex items-center gap-3.5">
-                <Avatar name={v.display_name || "Coach"} url={v.avatar_url.startsWith("http") ? v.avatar_url : null} size={72} />
-                <div className="grid min-w-0 flex-1 gap-2">
-                  <input className="input" style={{ height: 40 }} placeholder="Link ảnh đại diện (https://…)" aria-label="Link ảnh đại diện" inputMode="url" {...txt("avatar_url")} />
-                  <input className="input" style={{ height: 40 }} placeholder="Link ảnh bìa (https://…)" aria-label="Link ảnh bìa" inputMode="url" {...txt("cover_url")} />
-                </div>
+              <SectionHead icon="users" color="blue" title="Thông tin cơ bản" caption="Hiện trên thẻ hồ sơ ở trang công khai." />
+              <div className="mb-4">
+                <ImageUpload kind="avatar" shape="round" label="Ảnh đại diện" hint="Ảnh vuông, rõ mặt. Ảnh được nén tự động." value={v.avatar_url} onChange={(u) => set("avatar_url", u)} />
+                {save.err("avatar_url") && <div className="err mt-1">{save.err("avatar_url")}</div>}
               </div>
-              {(save.err("avatar_url") || save.err("cover_url")) && <div className="err mb-2">{save.err("avatar_url") ?? save.err("cover_url")}</div>}
               <div className="grid gap-3 md:grid-cols-2">
                 <Field label="Tên hiển thị" error={save.err("display_name")}>
                   <input className="input" maxLength={60} {...txt("display_name")} />
@@ -136,10 +135,26 @@ export function ProfileForm({ coach }: { coach: Coach }) {
             </div>
 
             <div className="card">
-              <h2 className="h2">Giới thiệu và phong cách</h2>
-              <Field label="Đôi lời giới thiệu" hint={`${v.bio.length} / 3000 ký tự`} error={save.err("bio")}>
-                <textarea className="input" style={{ minHeight: 132 }} maxLength={3000} value={v.bio} onChange={(e) => set("bio", e.target.value)} />
-              </Field>
+              <SectionHead icon="star" color="amber" title="Trang trí hồ sơ" caption="Ảnh bìa trên đầu trang, ảnh nền và bộ ảnh ở tab Giới thiệu." />
+              <div className="grid gap-4 md:grid-cols-2">
+                <ImageUpload kind="bia" label="Ảnh bìa" hint="Ảnh ngang, hiện trên dải đầu trang." value={v.cover_url} onChange={(u) => set("cover_url", u)} />
+                <ImageUpload kind="nen" label="Ảnh nền trang" hint="Hiện mờ phía sau nội dung." value={v.bg_url} onChange={(u) => set("bg_url", u)} />
+              </div>
+              {(save.err("cover_url") || save.err("bg_url")) && <div className="err mt-1">{save.err("cover_url") ?? save.err("bg_url")}</div>}
+              <div className="divide-row mt-4 pt-4">
+                <div className="mb-2.5">
+                  <b>Bộ ảnh giới thiệu</b>
+                  <p className="text-[13px] text-faint">Ảnh lớp học, sân, học viên… hiện dạng lưới ở tab Giới thiệu. Tối đa 24 ảnh.</p>
+                </div>
+                <GalleryEditor items={v.gallery} onChange={(g) => set("gallery", g)} />
+                {save.err("gallery") && <div className="err mt-1">{save.err("gallery")}</div>}
+              </div>
+            </div>
+
+            <div className="card">
+              <SectionHead icon="pen" color="indigo" title="Giới thiệu và phong cách" caption="Viết như một bài ngắn: có thể in đậm, in nghiêng, gạch đầu dòng và chèn ảnh." />
+              <RichEditor label="Đôi lời giới thiệu" value={v.bio} onChange={(b) => set("bio", b)} maxLength={8000} />
+              {save.err("bio") && <span className="err">{save.err("bio")}</span>}
               <div className="field mt-3.5">
                 <span className="label">Phong cách giảng dạy</span>
                 <LinesEditor label="Phong cách" items={v.teaching_style} onChange={(a) => set("teaching_style", a)} addLabel="Thêm ý" placeholder="Ví dụ: Sửa từng động tác qua video quay tại sân" />

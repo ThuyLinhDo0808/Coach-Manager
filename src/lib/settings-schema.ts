@@ -47,9 +47,15 @@ export function bankAccountName(input: string): string {
 export const profileSchema = z.object({
   display_name: reqText(2, 60, "Bạn điền tên hiển thị nhé"),
   tagline: nullText(120),
-  bio: nullText(3000),
+  bio: nullText(8000),
   avatar_url: url,
   cover_url: url,
+  bg_url: z.preprocess((v) => v ?? "", url),
+  // Bộ ảnh tab Giới thiệu (ảnh đã tải lên kho công khai).
+  gallery: z
+    .array(z.object({ url: text(500).refine((v) => /^https:\/\/\S+$/i.test(v), "Ảnh không hợp lệ"), caption: text(120) }))
+    .max(24, "Tối đa 24 ảnh")
+    .default([]),
   birth_year: optInt(1940, 2020, "Năm sinh chưa đúng"),
   show_age: z.boolean(),
   gender: z.preprocess((v) => (blank(v) ? null : v), z.enum(["nam", "nu", "khac"]).nullable()),

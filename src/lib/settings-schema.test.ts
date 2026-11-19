@@ -70,6 +70,12 @@ describe("profileSchema", () => {
       });
     }
   });
+  it("bộ ảnh giới thiệu: chỉ nhận ảnh https, tối đa 24", () => {
+    const g = { url: "https://x.supabase.co/storage/v1/object/public/anh-cong-khai/a.webp", caption: "Lớp sáng" };
+    expect(profileSchema.parse({ ...base, gallery: [g], bg_url: g.url })).toMatchObject({ gallery: [g], bg_url: g.url });
+    expect(profileSchema.safeParse({ ...base, gallery: [{ url: "javascript:alert(1)", caption: "" }] }).success).toBe(false);
+    expect(profileSchema.safeParse({ ...base, gallery: Array(25).fill(g) }).success).toBe(false);
+  });
 });
 
 describe("venueSchema", () => {

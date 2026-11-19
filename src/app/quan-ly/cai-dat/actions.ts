@@ -235,3 +235,30 @@ export async function saveTemplate(_prev: FormState, payload: unknown): Promise<
   revalidatePath(`${BASE}/mau-tin`);
   return SAVED;
 }
+
+// ---------------------------------------------------------------- ảnh công khai
+const IMAGE_KINDS = ["avatar", "bia", "nen", "gioi-thieu"] as const;
+const IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+
+/**
+ * Tải một ảnh (đã nén ở trình duyệt) vào kho công khai "anh-cong-khai", trả đường dẫn công khai.
+ * Đường dẫn bắt đầu bằng coach_id; database chỉ cho Team Leader của coach đó ghi.
+ */
+export async function uploadPublicImage(form: FormData): Promise<{ url?: string; error?: string }> {
+  const session = await requireOwner();
+  const kind = String(form.get("kind"));
+  const file = form.get("file");
+  if (!IMAGE_KINDS.includes(kind as (typeof IMAGE_KINDS)[number])) return { error: "Loại ảnh không đúng." };
+  if (!(file instanceof File) || file.size === 0) return { error: "Chưa chọn ảnh." };
+  if (!IMAGE_TYPES.includes(file.type)) return { error: "Chỉ nhận ảnh JPG, PNG, WEBP hoặc GIF." };
+  if (file.size > 4 * 1024 * 1024) return { error: "Ảnh tối đa 4 MB." };
+  const ext = file.type === "image/jpeg" ? "jpg" : file.type.split("/")[1];
+  const path = `${session.coach.id}/${kind}/${crypto.randomUUID()}.${ext}`;
+  const supabase = await serverClient();
+  const { error } = await supabase.storage.from("anh-cong-khai").upload(path, file, { contentType: file.type, cacheControl: "31536000" });
+  if (error) {
+    console.error("uploadPublicImage", error);
+    return { error: "Chưa tải được ảnh lên. Bạn đã chạy migration ảnh hồ sơ chưa?" };
+  }
+  return { url: supabase.storage.from("anh-cong-khai").getPublicUrl(path).data.publicUrl };
+}

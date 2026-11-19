@@ -72,7 +72,7 @@ const back = (path: string, msg: string) => redirect(`${path}${path.includes("?"
 async function uploadProof(db: Awaited<ReturnType<typeof serverClient>>, coachId: string, kind: string, f: FormData): Promise<string | null> {
   const file = f.get("proof");
   if (!(file instanceof File) || file.size === 0) return null;
-  if (file.size > 5 * 1024 * 1024) throw new Error("Ảnh tối đa 5 MB.");
+  if (file.size > 4 * 1024 * 1024) throw new Error("Ảnh tối đa 4 MB.");
   if (!PROOF_TYPES.includes(file.type)) throw new Error("Chỉ nhận ảnh JPG, PNG, WEBP, HEIC hoặc PDF.");
   const ext = (file.name.split(".").pop() ?? "jpg").toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 5) || "jpg";
   const path = `${coachId}/${kind}/${crypto.randomUUID()}.${ext}`;

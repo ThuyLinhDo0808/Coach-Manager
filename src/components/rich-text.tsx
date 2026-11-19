@@ -1,27 +1,51 @@
-import type { ReactNode } from "react";
+import { parseRich, type Inline } from "@/lib/rich-text";
 
-// Markdown đơn giản cho bài viết: "## tiêu đề", "- gạch đầu dòng", **đậm**, đoạn văn.
-function inline(text: string): ReactNode[] {
-  return text.split(/(\*\*[^*]+\*\*)/g).map((part, i) =>
-    part.startsWith("**") && part.endsWith("**") ? <b key={i}>{part.slice(2, -2)}</b> : part,
+function Line({ parts }: { parts: Inline[] }) {
+  return (
+    <>
+      {parts.map((p, i) => {
+        let node: React.ReactNode = p.text;
+        if (p.italic) node = <em>{node}</em>;
+        if (p.bold) node = <strong>{node}</strong>;
+        return <span key={i}>{node}</span>;
+      })}
+    </>
   );
 }
 
+const Lines = ({ lines }: { lines: Inline[][] }) =>
+  lines.map((l, i) => (
+    <span key={i}>
+      {i > 0 && <br />}
+      <Line parts={l} />
+    </span>
+  ));
+
+/** Hiển thị bài giới thiệu đã định dạng; đoạn văn canh đều hai bên. */
 export function RichText({ text, className }: { text: string; className?: string }) {
-  const blocks = text.replace(/\r/g, "").split(/\n{2,}/).map((b) => b.trim()).filter(Boolean);
   return (
-    <div className={`grid gap-3 text-[15px] leading-relaxed ${className ?? ""}`}>
-      {blocks.map((b, i) => {
-        if (b.startsWith("## ")) return <h2 key={i} className="mt-2 text-lg font-bold">{inline(b.slice(3))}</h2>;
-        const lines = b.split("\n");
-        if (lines.every((l) => /^[-•]\s+/.test(l))) {
-          return (
-            <ul key={i} className="grid list-disc gap-1.5 pl-5 text-ink/85">
-              {lines.map((l, j) => <li key={j}>{inline(l.replace(/^[-•]\s+/, ""))}</li>)}
-            </ul>
-          );
+    <div className={`rich ${className ?? ""}`}>
+      {parseRich(text).map((b, i) => {
+        switch (b.type) {
+          case "h":
+            return <h3 key={i}><Line parts={b.content} /></h3>;
+          case "ul":
+            return <ul key={i}>{b.items.map((it, j) => <li key={j}><Line parts={it} /></li>)}</ul>;
+          case "ol":
+            return <ol key={i}>{b.items.map((it, j) => <li key={j}><Line parts={it} /></li>)}</ol>;
+          case "quote":
+            return <blockquote key={i}><Lines lines={b.lines} /></blockquote>;
+          case "img":
+            return (
+              <figure key={i}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={b.url} alt={b.caption || "Ảnh"} loading="lazy" />
+                {b.caption && <figcaption>{b.caption}</figcaption>}
+              </figure>
+            );
+          default:
+            return <p key={i}><Lines lines={b.lines} /></p>;
         }
-        return <p key={i} className="text-ink/85">{inline(lines.join(" "))}</p>;
       })}
     </div>
   );

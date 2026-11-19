@@ -42,7 +42,8 @@ Chạy theo thứ tự, mỗi file một lần. Nếu Supabase hiện cảnh bá
 12. `supabase/migrations/20261125000000_month_close_funds.sql` — chốt tháng, bảng phải trả, nhật ký sửa, điều chỉnh tháng sau, các quỹ, trợ giảng, kho ảnh chứng từ riêng tư `chung-tu`
 13. `supabase/migrations/20261126000000_reports.sql` — số tổng cho Báo cáo lãi / lỗ (quản lý, cổ đông xem được) và Hiệu suất coach
 14. `supabase/migrations/20261127000000_venue_prices.sql` — bảng giá sân theo khung giờ (Thứ 2 – Thứ 6, Thứ 7 – Chủ nhật), chuyển giá thuê / giờ cũ sang
-15. `supabase/seed.sql` — nội dung mẫu (chạy lại nhiều lần cũng không sao). Sinh lại bằng `npm run seed:gen`.
+15. `supabase/migrations/20261128000000_profile_media.sql` — tải ảnh hồ sơ lên kho công khai `anh-cong-khai`; ảnh nền trang và bộ ảnh giới thiệu
+16. `supabase/seed.sql` — nội dung mẫu (chạy lại nhiều lần cũng không sao). Sinh lại bằng `npm run seed:gen`.
 
 ### Dữ liệu demo (tuỳ chọn)
 

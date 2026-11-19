@@ -27,6 +27,10 @@ export type Coach = {
   bio: string | null;
   avatar_url: string | null;
   cover_url: string | null;
+  /** Ảnh nền trang công khai. */
+  bg_url?: string | null;
+  /** Bộ ảnh tab Giới thiệu. */
+  gallery?: { url: string; caption: string }[];
   birth_year: number | null;
   show_age: boolean;
   gender: "nam" | "nu" | "khac" | null;
