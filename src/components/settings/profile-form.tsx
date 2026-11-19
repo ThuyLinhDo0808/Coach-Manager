@@ -7,7 +7,7 @@ import { Avatar } from "@/components/avatar";
 import { SaveAct, SaveBar, SaveError, useSave } from "@/components/form-kit";
 import { SettingsShell } from "@/components/settings/shell";
 import { Field, LinesEditor, moveItem, RowTools, SegPick, SwitchRow } from "@/components/ui-kit";
-import { ageFromBirthYear, formatNumber } from "@/lib/format";
+import { ageFromBirthYear, statText } from "@/lib/format";
 import type { Coach } from "@/lib/types";
 
 const GENDERS = [
@@ -42,10 +42,10 @@ function initial(c: Coach) {
     gender: (c.gender === "nam" || c.gender === "nu" ? c.gender : "") as "nam" | "nu" | "",
     area: c.area ?? "",
     dupr: c.dupr != null ? String(Number(c.dupr)) : "",
-    stat_hours: String(c.stat_hours ?? 0),
-    stat_students: String(c.stat_students ?? 0),
-    stat_courses: String(c.stat_courses ?? 0),
-    stat_years: String(c.stat_years ?? 0),
+    stat_hours: c.stat_hours ?? "",
+    stat_students: c.stat_students ?? "",
+    stat_courses: c.stat_courses ?? "",
+    stat_years: c.stat_years ?? "",
     teaching_style: [...(c.teaching_style ?? [])],
     strengths: (c.strengths ?? []).map((s) => ({ title: s.title ?? "", text: s.text ?? "" })),
     experience: (c.experience ?? []).map((e) => ({ year: e.year ?? "", title: e.title ?? "", detail: e.detail ?? "" })),
@@ -232,11 +232,11 @@ export function ProfileForm({ coach }: { coach: Coach }) {
               <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
                 {STATS.map(([k, label]) => (
                   <Field key={k} label={label} error={save.err(k)}>
-                    <input className="input num" inputMode="numeric" maxLength={9} {...txt(k)} />
+                    <input className="input" maxLength={20} placeholder="Ví dụ ~1000" {...txt(k)} />
                   </Field>
                 ))}
               </div>
-              <p className="mt-2 text-xs text-faint">Bốn số này nhập tay và hiện trên thẻ hồ sơ công khai; web chưa tự cộng từ lịch dạy.</p>
+              <p className="mt-2 text-xs text-faint">Nhập tự do, ví dụ “~1000”, “&gt; 100”, “3+”. Hiện đúng như bạn gõ trên thẻ hồ sơ công khai; số thuần sẽ có dấu chấm ngăn cách (1200 → 1.200).</p>
             </div>
           </div>
 
@@ -272,7 +272,7 @@ export function ProfileForm({ coach }: { coach: Coach }) {
               <div className="mt-3 grid grid-cols-2 gap-2">
                 {STATS.map(([k, , unit]) => (
                   <div key={k} className="stat">
-                    <div className="v">{formatNumber(Number(v[k].replace(/\D/g, "")) || 0)}</div>
+                    <div className="v">{statText(v[k])}</div>
                     <div className="l">{unit}</div>
                   </div>
                 ))}

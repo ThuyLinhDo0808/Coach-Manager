@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ageFromBirthYear, formatVnd, initials, normalizePhone } from "./format";
+import { ageFromBirthYear, formatVnd, initials, normalizePhone, statText } from "./format";
 
 describe("formatVnd", () => {
   it("định dạng tiền Việt", () => {
@@ -28,5 +28,14 @@ describe("normalizePhone", () => {
   });
   it("từ chối số sai", () => {
     expect(normalizePhone("12345")).toBeNull();
+  });
+});
+
+describe("statText", () => {
+  it("giữ chữ tự do, định dạng số thuần", () => {
+    expect(statText("~1000")).toBe("~1000");
+    expect(statText("> 100")).toBe("> 100");
+    expect(statText("1200")).toBe("1.200");
+    expect(statText("")).toBe("—");
   });
 });

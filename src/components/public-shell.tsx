@@ -3,7 +3,7 @@ import { Avatar } from "@/components/avatar";
 import { zaloHref } from "@/components/contact-links";
 import { Icon } from "@/components/icon";
 import { PublicTabs, StickyCta } from "@/components/public-nav";
-import { ageFromBirthYear, formatNumber } from "@/lib/format";
+import { ageFromBirthYear, statText } from "@/lib/format";
 import type { Coach } from "@/lib/types";
 
 const GENDER = { nam: "Nam", nu: "Nữ", khac: null } as const;
@@ -30,10 +30,10 @@ export function PublicShell({
   const age = coach.show_age ? ageFromBirthYear(coach.birth_year) : null;
   const meta = [coach.gender ? GENDER[coach.gender] : null, age ? `${age} tuổi` : null, coach.area].filter(Boolean);
   const stats = [
-    [formatNumber(coach.stat_hours), "giờ dạy"],
-    [formatNumber(coach.stat_students), "học viên"],
-    [formatNumber(coach.stat_courses), "khoá đã dạy"],
-    [formatNumber(coach.stat_years), "năm kinh nghiệm"],
+    [statText(coach.stat_hours), "giờ dạy"],
+    [statText(coach.stat_students), "học viên"],
+    [statText(coach.stat_courses), "khoá đã dạy"],
+    [statText(coach.stat_years), "năm kinh nghiệm"],
   ];
 
   return (

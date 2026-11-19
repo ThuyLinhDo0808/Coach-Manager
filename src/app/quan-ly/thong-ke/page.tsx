@@ -41,7 +41,7 @@ export default async function ThongKePage({ searchParams }: { searchParams: Prom
   const gain = avgDuprGain(enrollments.filter((e) => e.status === "tot-nghiep").map((e) => ({ final_dupr: e.final_dupr, start: startOf(e.student_id) })));
   const hours = (list: typeof sessions) => list.filter((s) => s.status === "da-day").reduce((h, s) => h + (new Date(s.ends_at).getTime() - new Date(s.starts_at).getTime()) / 3_600_000, 0);
   const taught = Math.round(hours(sessions));
-  const taughtEver = Math.round(hours(allSessionsEver)) + session.coach.stat_hours;
+  const taughtEver = Math.round(hours(allSessionsEver));
 
   const series = monthlyTotals(ledger, months);
   const max = Math.max(...series.map((s) => Math.max(s.thu, s.chi)), 1);
@@ -76,7 +76,7 @@ export default async function ThongKePage({ searchParams }: { searchParams: Prom
         <div className="card kpi"><div className="l">Tỷ lệ chốt</div><div className="v">{closeRate != null ? `${closeRate}%` : "—"}</div><div className="s">{steps[3].value} / {steps[0].value} nhu cầu</div></div>
         <div className="card kpi"><div className="l">Học tiếp khoá 2</div><div className="v">{pct(ret.again, ret.base) != null ? `${pct(ret.again, ret.base)}%` : "—"}</div><div className="s">{ret.again} / {ret.base} học viên · mọi thời gian</div></div>
         <div className="card kpi"><div className="l">DUPR tăng trung bình</div><div className="v">{gain != null ? `${gain >= 0 ? "+" : ""}${String(gain).replace(".", ",")}` : "—"}</div><div className="s">sau một khoá đã tốt nghiệp</div></div>
-        <div className="card kpi"><div className="l">Giờ dạy</div><div className="v">{taught} giờ</div><div className="s">tổng {taughtEver.toLocaleString("vi-VN")} giờ</div></div>
+        <div className="card kpi"><div className="l">Giờ dạy</div><div className="v">{taught} giờ</div><div className="s">tổng {taughtEver.toLocaleString("vi-VN")} giờ trên web</div></div>
       </div>
 
       <div className="grid items-start gap-4 md:grid-cols-2">
