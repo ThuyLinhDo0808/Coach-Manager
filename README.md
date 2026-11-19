@@ -36,7 +36,8 @@ Chạy theo thứ tự, mỗi file một lần. Nếu Supabase hiện cảnh bá
 6. `supabase/migrations/20261119000000_money_offers.sql` — sổ thu chi, offer, thanh toán
 7. `supabase/migrations/20261120000000_settings_content.sql` — mời thành viên, mẫu tin nhắn, cột sân
 8. `supabase/migrations/20261121000000_course_kind_nhom.sql` — thêm loại khoá "Nhóm nhỏ"
-9. `supabase/seed.sql` — nội dung mẫu (chạy lại nhiều lần cũng không sao). Sinh lại bằng `npm run seed:gen`.
+9. `supabase/migrations/20261122000000_stats_as_text.sql` — số liệu nổi bật của coach là chữ tự do
+10. `supabase/seed.sql` — nội dung mẫu (chạy lại nhiều lần cũng không sao). Sinh lại bằng `npm run seed:gen`.
 
 ### Dữ liệu demo (tuỳ chọn)
 
