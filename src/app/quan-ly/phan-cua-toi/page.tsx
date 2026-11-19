@@ -35,7 +35,7 @@ export default async function PhanCuaToiPage({ searchParams }: { searchParams: P
       </PageHead>
       {!myShare && (
         <div className="card mb-4" style={{ background: "#fffbeb" }}>
-          Tài khoản của bạn chưa được gắn với một cổ đông trong tỉ lệ đang áp dụng, nên chưa có số ở đây. Coach chủ gắn ở Cài đặt › Tỉ lệ chia &amp; cổ đông.
+          Tài khoản của bạn chưa được gắn với một cổ đông trong tỉ lệ đang áp dụng, nên chưa có số ở đây. Team Leader gắn ở Cài đặt › Tỉ lệ chia &amp; cổ đông.
         </div>
       )}
       <div className="kpis">

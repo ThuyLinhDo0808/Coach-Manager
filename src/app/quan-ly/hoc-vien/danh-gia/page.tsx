@@ -4,7 +4,7 @@ import { getAdminReviews, getCourseOptions } from "@/lib/settings-data";
 
 export const metadata = { title: "Đánh giá" };
 
-// Đánh giá của học viên (hiện ở tab Đánh giá trang công khai). Chỉ coach chủ sửa được.
+// Đánh giá của học viên (hiện ở tab Đánh giá trang công khai). Chỉ Team Leader sửa được.
 export default async function DanhGiaPage() {
   const session = await requireOwner();
   const [reviews, courses] = await Promise.all([getAdminReviews(session.coach.id), getCourseOptions(session.coach.id)]);

@@ -19,7 +19,7 @@ export function NotifyForm({ notify }: { notify: NotifySettings }) {
 
   return (
     <form onSubmit={save.onSubmit} noValidate>
-      <SettingsShell on="thong-bao" sub="báo cho bạn khi nào, qua kênh nào" act={<SaveAct save={save} />}>
+      <SettingsShell on="thong-bao" act={<SaveAct save={save} />}>
         <SaveError save={save} />
         <Notice>Hiện web mới lưu lựa chọn của bạn. Việc gửi thông báo qua chuông, email và Zalo chưa hoạt động.</Notice>
         <div className="grid items-start gap-4 md:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">

@@ -4,12 +4,10 @@ import { DEFAULT_SETTINGS } from "./settings";
 import {
   bankAccountName,
   courseSchema,
-  domainSchema,
   inviteSchema,
   primaryRole,
   joinSchema,
   memberSchema,
-  normalizeDomain,
   notifySchema,
   payoutSchema,
   permissionsSchema,
@@ -75,18 +73,25 @@ describe("profileSchema", () => {
 });
 
 describe("venueSchema", () => {
-  const base = { id: "", name: "Sân Sunrise", district: "", address: "", maps_url: "", image_url: "", hours_text: "", court_count: "4", rent_per_hour: "180.000 đ", is_public: true, sort: "0" };
-  it("nhận giá có dấu chấm và chữ đ; để trống thì null", () => {
-    expect(venueSchema.parse(base)).toMatchObject({ id: null, court_count: 4, rent_per_hour: 180000, sort: 0 });
-    expect(venueSchema.parse({ ...base, court_count: "", rent_per_hour: "" })).toMatchObject({ court_count: null, rent_per_hour: null });
+  const base = {
+    id: "", name: "Sân Sunrise", district: "", address: "", maps_url: "", image_url: "", is_public: true,
+    price_rules: [
+      { days: "t2-t6", from: "12:00", to: "16:00", price: 250000 },
+      { days: "t2-t6", from: "05:00", to: "11:59", price: 150000 },
+    ],
+  };
+  it("nhận bảng giá theo khung giờ, sắp theo giờ", () => {
+    expect(venueSchema.parse(base).price_rules.map((r) => r.from)).toEqual(["05:00", "12:00"]);
+    expect(venueSchema.parse({ ...base, price_rules: [] }).price_rules).toEqual([]);
+  });
+  it("từ chối khung giá trùng giờ", () => {
+    expect(venueSchema.safeParse({ ...base, price_rules: [...base.price_rules, { days: "t2-t6", from: "11:00", to: "13:00", price: 1 }] }).success).toBe(false);
   });
   it("nhận id mẫu không đúng phiên bản UUID", () => {
     expect(venueSchema.parse({ ...base, id: ID }).id).toBe(ID);
   });
-  it("từ chối số sân vô lý, tên trống", () => {
-    expect(venueSchema.safeParse({ ...base, court_count: "0" }).success).toBe(false);
+  it("từ chối tên trống", () => {
     expect(venueSchema.safeParse({ ...base, name: "" }).success).toBe(false);
-    expect(venueSchema.safeParse({ ...base, rent_per_hour: "abc" }).success).toBe(false);
   });
 });
 
@@ -167,7 +172,7 @@ describe("payoutSchema", () => {
 });
 
 describe("thành viên và lời mời", () => {
-  it("email lời mời về chữ thường, nhiều vai trò, không mời được coach chủ", () => {
+  it("email lời mời về chữ thường, nhiều vai trò, không mời được Team Leader", () => {
     expect(inviteSchema.parse({ email: " Hanh@Email.COM ", roles: ["sale", "coach", "sale"], display_name: "" })).toEqual({
       email: "hanh@email.com",
       roles: ["sale", "coach"],
@@ -198,19 +203,6 @@ describe("templateSchema", () => {
     expect(templateSchema.safeParse({ key: "sinh-nhat", title: "Sinh nhật", body: "Chúc {tên gọi}", enabled: true }).success).toBe(true);
     expect(templateSchema.safeParse({ key: "la", title: "Sinh nhật", body: "x", enabled: true }).success).toBe(false);
     expect(templateSchema.safeParse({ key: "sinh-nhat", title: "Sinh nhật", body: "  ", enabled: true }).success).toBe(false);
-  });
-});
-
-describe("domainSchema", () => {
-  it("chuẩn hoá tên miền", () => {
-    expect(normalizeDomain(" https://Hoc.TrungMuoi.vn/abc?x=1 ")).toBe("hoc.trungmuoi.vn");
-    expect(domainSchema.parse({ custom_domain: "HTTPS://trungmuoi.vn/" })).toEqual({ custom_domain: "trungmuoi.vn" });
-    expect(domainSchema.parse({ custom_domain: "  " })).toEqual({ custom_domain: "" });
-  });
-  it("từ chối tên miền sai", () => {
-    for (const bad of ["trungmuoi", "trung muoi.vn", "-abc.vn", "abc..vn", "tên-miền.vn"]) {
-      expect(domainSchema.safeParse({ custom_domain: bad }).success, bad).toBe(false);
-    }
   });
 });
 

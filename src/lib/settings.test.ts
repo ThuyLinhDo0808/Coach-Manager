@@ -14,12 +14,11 @@ describe("getSettings", () => {
   });
 
   it("gộp từng nhóm với mặc định", () => {
-    const s = getSettings({ rules: { notice_hours: 24 }, lead_assign: { mode: "xoay-vong" }, collect: { accept_cash: false }, custom_domain: "hoc.trungmuoi.vn" });
+    const s = getSettings({ rules: { notice_hours: 24 }, lead_assign: { mode: "xoay-vong" }, collect: { accept_cash: false } });
     expect(s.rules.notice_hours).toBe(24);
     expect(s.rules.makeup_max).toBe(DEFAULT_SETTINGS.rules.makeup_max);
     expect(s.lead_assign).toEqual({ mode: "xoay-vong", alert_24h: true });
     expect(s.collect).toEqual({ accept_cash: false, require_proof: true });
-    expect(s.custom_domain).toBe("hoc.trungmuoi.vn");
   });
 
   it("gộp từng sự kiện thông báo và từng quyền, bỏ khoá lạ", () => {
@@ -38,10 +37,6 @@ describe("getSettings", () => {
   it("giữ nhóm của đợt khác mà file này chưa biết", () => {
     const s = getSettings({ nhom_khac: { a: 1 } }) as unknown as Record<string, unknown>;
     expect(s.nhom_khac).toEqual({ a: 1 });
-  });
-
-  it("custom_domain sai kiểu thì coi như trống", () => {
-    expect(getSettings({ custom_domain: 5 }).custom_domain).toBe("");
   });
 
   it("không sửa vào giá trị mặc định dùng chung", () => {

@@ -30,7 +30,7 @@ export default async function TiLePage({ searchParams }: { searchParams: Promise
   const example = current ? splitAmount(1200000, current, { saleId: null, coachId: null }) : [];
 
   return (
-    <SettingsShell on="ti-le" sub="chia tiền theo buổi đã dạy · chỉ coach chủ sửa">
+    <SettingsShell on="ti-le">
       {sp["da-luu"] && <div className="card text-[13px] font-semibold text-good" role="status">Đã lưu tỉ lệ. Các buổi từ ngày áp dụng (tháng chưa chốt) đã được tính lại.</div>}
       <div className="grid items-start gap-4 md:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">
         <div className="card">

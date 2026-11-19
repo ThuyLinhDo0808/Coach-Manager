@@ -5,7 +5,7 @@
 export type Role = "chu" | "quan-ly" | "co-dong" | "coach" | "sale" | "tro-giang";
 
 export const ROLES: { value: Role; label: string; hint: string }[] = [
-  { value: "chu", label: "Coach chủ", hint: "Toàn quyền; duy nhất sửa tỉ lệ chia, chốt tháng" },
+  { value: "chu", label: "Team Leader", hint: "Toàn quyền; duy nhất sửa tỉ lệ chia, chốt tháng" },
   { value: "quan-ly", label: "Quản lý đào tạo", hint: "Tuyển sinh, xác nhận xếp lớp, lịch trung tâm, lớp, học viên, phân công" },
   { value: "co-dong", label: "Cổ đông", hint: "Xem báo cáo lãi / lỗ, các quỹ, phần của mình" },
   { value: "coach", label: "Coach", hint: "Lịch của mình, học viên lớp mình, điểm danh, thu nhập" },
@@ -69,5 +69,5 @@ export function permsFor(roles: Role[]): Perm[] {
 
 export const hasRole = (roles: Role[], ...wanted: Role[]) => wanted.some((r) => roles.includes(r));
 
-/** Chỉ thấy phần việc của mình (không phải coach chủ / quản lý): lịch, học viên, lớp lọc theo người dạy. */
+/** Chỉ thấy phần việc của mình (không phải Team Leader / quản lý): lịch, học viên, lớp lọc theo người dạy. */
 export const seesOnlyOwnTeaching = (roles: Role[]) => !hasRole(roles, "chu", "quan-ly");

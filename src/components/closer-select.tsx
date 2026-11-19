@@ -1,6 +1,6 @@
 import type { Member } from "@/lib/types";
 
-/** Người được ghi là người chốt: thành viên có vai trò sale, quản lý hoặc coach chủ. */
+/** Người được ghi là người chốt: thành viên có vai trò sale, quản lý hoặc Team Leader. */
 export const closerCandidates = (members: Member[]) =>
   members.filter((m) => (m.roles ?? [m.role === "owner" ? "chu" : m.role]).some((r) => r === "sale" || r === "quan-ly" || r === "chu"));
 

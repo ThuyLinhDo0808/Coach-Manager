@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { savePayout } from "@/app/quan-ly/cai-dat/actions";
 import { SaveAct, SaveBar, SaveError, useSave } from "@/components/form-kit";
-import { SettingsShell } from "@/components/settings/shell";
+import { Icon } from "@/components/icon";
+import { Hint, SectionHead, SettingsShell } from "@/components/settings/shell";
 import { Field, SegPick, SwitchRow, UnitInput } from "@/components/ui-kit";
 import { formatVnd } from "@/lib/format";
 import type { CollectSettings, PayoutSettings } from "@/lib/settings";
@@ -40,12 +41,18 @@ export function PayoutForm({ payout, collect, example }: { payout: PayoutSetting
 
   return (
     <form onSubmit={save.onSubmit} noValidate>
-      <SettingsShell on="nhan-tien" sub="tài khoản nhận học phí" act={<SaveAct save={save} />}>
+      <SettingsShell on="nhan-tien" act={<SaveAct save={save} />}>
         <SaveError save={save} />
         <div className="grid items-start gap-4 md:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
           <div className="grid min-w-0 gap-4 *:min-w-0">
-            <div className="card">
-              <h2 className="h2">Tài khoản ngân hàng</h2>
+            <section className="card">
+              <SectionHead
+                icon="wallet"
+                color="emerald"
+                title="Tài khoản nhận tiền"
+                caption="Học viên chuyển học phí vào tài khoản này."
+                right={<span className={`pill ${ready ? "good" : "warn"}`}>{ready ? "Đã đủ thông tin" : "Chưa đủ thông tin"}</span>}
+              />
               <div className="grid gap-3 md:grid-cols-2">
                 <Field label="Ngân hàng" className="md:col-span-2" error={save.err("bank_bin")}>
                   <select className="input" value={v.bank_bin} onChange={(e) => set("bank_bin", e.target.value)}>
@@ -59,30 +66,30 @@ export function PayoutForm({ payout, collect, example }: { payout: PayoutSetting
                   </select>
                 </Field>
                 <Field label="Số tài khoản" error={save.err("account_no")}>
-                  <input className="input num" inputMode="numeric" maxLength={24} autoComplete="off" value={v.account_no} onChange={(e) => set("account_no", e.target.value)} />
+                  <input className="input num" inputMode="numeric" maxLength={24} autoComplete="off" placeholder="0123 456 789" value={v.account_no} onChange={(e) => set("account_no", e.target.value)} />
                 </Field>
                 <Field label="Tên chủ tài khoản" error={save.err("account_name")}>
                   <input className="input uppercase" maxLength={60} autoComplete="off" placeholder="NGUYEN VAN A" value={v.account_name} onChange={(e) => set("account_name", e.target.value)} />
                 </Field>
               </div>
-              <p className="mt-2 text-xs text-faint">Tên chủ tài khoản viết hoa không dấu. Web không kiểm tra được tên với ngân hàng; bạn dò lại số tài khoản và tên trước khi lưu.</p>
-            </div>
+              <Hint>Tên viết hoa, không dấu, đúng như trên ứng dụng ngân hàng. Web không đối chiếu được với ngân hàng, bạn dò lại trước khi lưu.</Hint>
+            </section>
 
-            <div className="card">
-              <h2 className="h2">Cách thu tiền</h2>
-              <div className="flex items-center justify-between gap-2.5 py-2.5">
+            <section className="card">
+              <SectionHead icon="check" color="blue" title="Cách thu tiền" caption="Những cách học viên được đóng học phí." />
+              <div className="flex items-center justify-between gap-2.5 pb-2.5">
                 <div className="min-w-0">
-                  <b>Chuyển khoản ngân hàng</b>
-                  <div className="text-[13px] text-faint">Luôn dùng khi đã điền tài khoản ở trên</div>
+                  <b>Chuyển khoản</b>
+                  <div className="text-[13px] text-faint">Mã QR và nội dung chuyển khoản tạo riêng cho từng offer</div>
                 </div>
-                <span className={`pill ${ready ? "good" : "n"}`}>{ready ? "Sẵn sàng" : "Chưa có tài khoản"}</span>
+                <span className={`pill ${ready ? "good" : "n"}`}>{ready ? "Đang bật" : "Cần tài khoản"}</span>
               </div>
-              <SwitchRow title="Tiền mặt tại sân" sub="Coach / trợ giảng ghi nhận đã thu" checked={v.accept_cash} onChange={(b) => set("accept_cash", b)} />
-              <SwitchRow title="Học viên gửi ảnh chuyển khoản" sub="Cần ảnh để coach xác nhận đã nhận tiền" checked={v.require_proof} onChange={(b) => set("require_proof", b)} />
-            </div>
+              <SwitchRow title="Tiền mặt tại sân" sub="Coach hoặc trợ giảng ghi nhận đã thu" checked={v.accept_cash} onChange={(b) => set("accept_cash", b)} />
+              <SwitchRow title="Bắt buộc gửi ảnh chuyển khoản" sub="Có ảnh thì xác nhận tiền nhanh hơn" checked={v.require_proof} onChange={(b) => set("require_proof", b)} />
+            </section>
 
-            <div className="card">
-              <h2 className="h2">Đặt cọc và hạn thanh toán</h2>
+            <section className="card">
+              <SectionHead icon="clock" color="amber" title="Đặt cọc và hạn đóng" caption="Số tiền cần đóng khi chốt khoá và offer giữ chỗ bao lâu." />
               <div className="grid gap-3 md:grid-cols-2">
                 <div className="field">
                   <span className="label">Đặt cọc khi chốt khoá</span>
@@ -93,38 +100,43 @@ export function PayoutForm({ payout, collect, example }: { payout: PayoutSetting
                   <UnitInput unit="ngày" inputMode="numeric" maxLength={2} value={v.offer_days} onChange={(e) => set("offer_days", e.target.value)} />
                 </Field>
               </div>
-            </div>
+              <Hint>{v.deposit_pct > 0 && v.deposit_pct < 100 ? `Học viên đóng trước ${v.deposit_pct}% học phí, phần còn lại đóng sau.` : v.deposit_pct === 100 ? "Học viên đóng đủ học phí khi chốt khoá." : "Không thu cọc: học viên đóng đủ khi vào học."} Quá hạn mà chưa đóng thì offer tự hết hiệu lực.</Hint>
+            </section>
           </div>
 
-          <div className="card">
-            <div className="mb-3 text-xs font-semibold text-faint">XEM TRƯỚC · THÔNG TIN CHUYỂN KHOẢN</div>
-            <div className="rounded-[18px] bg-page p-[18px]">
-              {ready ? (
-                <>
-                  <div className="num text-center text-2xl font-extrabold">{dong(amount)}</div>
-                  <div className="text-center text-[13px] text-faint">
-                    {pct < 100 ? `Cọc ${pct}%` : "Đóng đủ"} · {example?.title ?? "ví dụ khoá 3.200.000 đ"}
-                  </div>
-                  <div className="mt-3 grid gap-1.5 text-[13px]">
-                    {[
-                      ["Ngân hàng", bankName(v.bank_bin) || payout.bank_name || v.bank_bin],
-                      ["Số tài khoản", v.account_no.replace(/\s/g, "")],
-                      ["Chủ tài khoản", v.account_name.toUpperCase()],
-                      ["Nội dung", "mã riêng của từng offer"],
-                    ].map(([a, b]) => (
-                      <div key={a} className="flex justify-between gap-3">
-                        <span className="flex-none text-faint">{a}</span>
-                        <b className="min-w-0 text-right break-words">{b}</b>
-                      </div>
-                    ))}
-                  </div>
-                </>
-              ) : (
-                <div className="text-center text-[13px] text-muted">Điền đủ ngân hàng, số tài khoản và tên chủ tài khoản để xem trước.</div>
-              )}
-            </div>
-            <p className="mt-3 text-xs text-faint">Mã QR chuyển khoản và link thanh toán nằm ở phần offer trong Thu chi; trang này chỉ lưu tài khoản nhận tiền.</p>
-          </div>
+          <section className="card md:sticky md:top-4">
+            <SectionHead icon="qr" color="indigo" title="Học viên sẽ thấy" caption="Xem trước thông tin chuyển khoản trên offer." />
+            {ready ? (
+              <div className="overflow-hidden rounded-[18px] text-white" style={{ background: "var(--grad-navy)" }}>
+                <div className="flex items-center justify-between gap-2 px-[18px] pt-4 text-[13px] text-[#b9c5da]">
+                  <span className="font-semibold text-white">{bankName(v.bank_bin) || payout.bank_name || v.bank_bin}</span>
+                  <span>{pct < 100 ? `Cọc ${pct}%` : "Đóng đủ"}</span>
+                </div>
+                <div className="px-[18px] pt-3 pb-4">
+                  <div className="num text-[28px] leading-none font-extrabold text-lime">{dong(amount)}</div>
+                  <div className="mt-1 truncate text-[13px] text-[#b9c5da]">{example?.title ?? "Ví dụ khoá 3.200.000 đ"}</div>
+                </div>
+                <div className="grid gap-2 bg-white/5 px-[18px] py-3.5 text-[13px]">
+                  {[
+                    ["Số tài khoản", v.account_no.replace(/\s/g, "")],
+                    ["Chủ tài khoản", v.account_name.toUpperCase()],
+                    ["Nội dung", "Mã riêng của offer"],
+                  ].map(([a, b]) => (
+                    <div key={a} className="flex justify-between gap-3">
+                      <span className="flex-none text-[#b9c5da]">{a}</span>
+                      <b className="num min-w-0 text-right break-words">{b}</b>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div className="grid place-items-center gap-2 rounded-[18px] border border-dashed border-line px-4 py-8 text-center text-[13px] text-muted">
+                <Icon name="wallet" size={22} className="text-faint" />
+                Điền ngân hàng, số tài khoản và tên chủ tài khoản để xem trước.
+              </div>
+            )}
+            <Hint>Mã QR và link thanh toán gửi học viên nằm ở offer trong Tuyển sinh / Sổ thu chi.</Hint>
+          </section>
         </div>
         <SaveBar save={save} />
       </SettingsShell>

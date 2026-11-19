@@ -3,6 +3,7 @@ import { parseYoutubeId } from "@/lib/content";
 import { DEFAULT_TEMPLATES } from "@/lib/message-templates";
 import { NOTIFY_EVENTS, PERMISSIONS } from "@/lib/settings";
 import { BANKS } from "@/lib/settings-types";
+import { ruleError, sortRules } from "@/lib/venue-price";
 
 // Kiểm tra dữ liệu các form Cài đặt và Nội dung. Form gửi chữ (ô nhập), schema đổi sang đúng kiểu.
 
@@ -40,11 +41,6 @@ export function bankAccountName(input: string): string {
     .toUpperCase()
     .replace(/\s+/g, " ")
     .trim();
-}
-
-/** "https://Hoc.TrungMuoi.vn/abc" → "hoc.trungmuoi.vn" */
-export function normalizeDomain(input: string): string {
-  return input.trim().toLowerCase().replace(/^[a-z]+:\/\//, "").replace(/[/?#].*$/, "").replace(/\.$/, "");
 }
 
 // ---------------------------------------------------------------- Cài đặt
@@ -91,11 +87,24 @@ export const venueSchema = z.object({
   address: nullText(200),
   maps_url: url,
   image_url: url,
-  hours_text: nullText(120),
-  court_count: optInt(1, 99, "Số sân từ 1 đến 99"),
-  rent_per_hour: optInt(0, 100_000_000, "Giá thuê chưa đúng"),
+  price_rules: z
+    .array(
+      z.object({
+        days: z.enum(["t2-t6", "t7-cn"]),
+        from: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/),
+        to: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/),
+        price: z.number().int().min(1).max(100_000_000),
+      }),
+    )
+    .max(30, "Tối đa 30 khung giá")
+    .superRefine((rules, ctx) => {
+      rules.forEach((r, i) => {
+        const err = ruleError(r, rules.slice(0, i));
+        if (err) ctx.addIssue({ code: "custom", message: `${r.from}–${r.to}: ${err}` });
+      });
+    })
+    .transform(sortRules),
   is_public: z.boolean(),
-  sort: int(0, 9999, "Thứ tự là số từ 0 trở lên"),
 });
 
 export const COURSE_KIND_VALUES = ["co-ban", "sua-loi", "nang-cao", "luyen-cu", "kid", "kem-1-1", "nhom"] as const;
@@ -229,14 +238,6 @@ export const notifySchema = z.object({
   digest: z.object({ on: z.boolean(), at: hhmm }),
 });
 
-export const domainSchema = z.object({
-  custom_domain: z
-    .string()
-    .transform(normalizeDomain)
-    .refine((v) => v === "" || (v.length <= 253 && /^([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,}$/.test(v)), "Tên miền chưa đúng, ví dụ: hoc.trungmuoi.vn"),
-});
-
-// ---------------------------------------------------------------- Nội dung
 export const videoGroupSchema = z.object({ id: optId, name: reqText(2, 40, "Tên nhóm cần 2–40 ký tự") });
 
 export const videoSchema = z.object({

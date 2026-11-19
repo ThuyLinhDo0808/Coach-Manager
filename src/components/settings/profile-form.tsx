@@ -81,7 +81,6 @@ export function ProfileForm({ coach }: { coach: Coach }) {
     <form onSubmit={save.onSubmit} noValidate>
       <SettingsShell
         on="ho-so"
-        sub="hiện ở trang công khai"
         act={
           <>
             <Link href="/" target="_blank" className="btn sm glass hide-m">

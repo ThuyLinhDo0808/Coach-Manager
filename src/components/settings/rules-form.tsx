@@ -53,7 +53,7 @@ export function RulesForm({ rules }: { rules: RulesSettings }) {
 
   return (
     <form onSubmit={save.onSubmit} noValidate>
-      <SettingsShell on="quy-dinh" sub="áp dụng cho mọi lớp" act={<SaveAct save={save} />}>
+      <SettingsShell on="quy-dinh" act={<SaveAct save={save} />}>
         <SaveError save={save} />
         <div className="grid items-start gap-4 md:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
           <div className="grid min-w-0 gap-4 *:min-w-0">

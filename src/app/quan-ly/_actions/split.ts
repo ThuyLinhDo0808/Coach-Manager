@@ -10,7 +10,7 @@ import { serverClient } from "@/lib/supabase/server";
 const TI_LE = "/quan-ly/cai-dat/ti-le";
 const CHIA = "/quan-ly/tai-chinh/chia-tien";
 
-/** Thêm (hoặc thay) tỉ lệ có hiệu lực từ một ngày. Chỉ coach chủ; database kiểm tra lại tổng 100% và quyền. */
+/** Thêm (hoặc thay) tỉ lệ có hiệu lực từ một ngày. Chỉ Team Leader; database kiểm tra lại tổng 100% và quyền. */
 export async function saveSplitRule(form: FormData) {
   const session = await requireOwner();
   const parsed = parseRuleForm((k) => {
@@ -43,7 +43,7 @@ export async function deleteSplitRule(form: FormData) {
   redirect(TI_LE);
 }
 
-/** Tính lại toàn bộ bút toán của một tháng chưa chốt (database chỉ cho coach chủ). */
+/** Tính lại toàn bộ bút toán của một tháng chưa chốt (database chỉ cho Team Leader). */
 export async function regenMonth(form: FormData) {
   const session = await requirePerm("tai-chinh");
   const month = String(form.get("month"));

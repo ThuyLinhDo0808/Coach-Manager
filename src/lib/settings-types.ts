@@ -1,4 +1,5 @@
 import type { Role } from "./permissions";
+import type { PriceRule } from "./venue-price";
 import type { Course, MemberRole } from "./types";
 
 /** Kết quả của server action lưu form: thông báo + lỗi theo tên trường. */
@@ -53,25 +54,23 @@ export type VenueAdmin = {
   district: string | null;
   image_url: string | null;
   maps_url: string | null;
-  hours_text: string | null;
   is_public: boolean;
   sort: number;
-  court_count: number | null;
-  rent_per_hour: number | null;
+  /** Bảng giá theo khung giờ, giá mỗi giờ mỗi sân. */
+  price_rules: PriceRule[];
 };
 
 export type CourseAdmin = Course & { is_public: boolean; sort: number };
 
 export const SETTINGS_MENU = [
-  { slug: "ho-so", label: "Hồ sơ trung tâm" },
-  { slug: "san", label: "Sân dạy" },
-  { slug: "mau-khoa", label: "Gói buổi" },
-  { slug: "quy-dinh", label: "Quy định lớp" },
-  { slug: "ti-le", label: "Tỉ lệ chia & cổ đông" },
-  { slug: "nhan-tien", label: "Thanh toán" },
-  { slug: "thanh-vien", label: "Phân quyền" },
-  { slug: "mau-tin", label: "Mẫu tin nhắn" },
-  { slug: "thong-bao", label: "Thông báo" },
-  { slug: "ten-mien", label: "Tên miền riêng" },
+  { slug: "ho-so", label: "Hồ sơ trung tâm", icon: "star", color: "blue", desc: "Tên, ảnh, giới thiệu và liên hệ hiện trên trang công khai" },
+  { slug: "san", label: "Sân dạy", icon: "map", color: "teal", desc: "Nơi dạy, địa chỉ và bảng giá thuê theo khung giờ" },
+  { slug: "mau-khoa", label: "Gói buổi", icon: "book", color: "indigo", desc: "Các gói học viên chọn khi đăng ký: số buổi, học phí, giáo trình" },
+  { slug: "quy-dinh", label: "Quy định lớp học", icon: "file", color: "amber", desc: "Báo nghỉ, trừ buổi, học bù, hoàn phí và học thử — áp dụng cho mọi lớp" },
+  { slug: "ti-le", label: "Tỉ lệ chia & cổ đông", icon: "chart", color: "emerald", desc: "Cách chia học phí mỗi buổi đã dạy; chỉ Team Leader sửa" },
+  { slug: "nhan-tien", label: "Thanh toán", icon: "wallet", color: "emerald", desc: "Tài khoản nhận học phí, cách thu tiền và đặt cọc" },
+  { slug: "thanh-vien", label: "Phân quyền", icon: "team", color: "violet", desc: "Thành viên trong đội, vai trò và quyền của từng người" },
+  { slug: "mau-tin", label: "Mẫu tin nhắn", icon: "chat", color: "cyan", desc: "Tin nhắn soạn sẵn để gửi học viên qua Zalo" },
+  { slug: "thong-bao", label: "Thông báo", icon: "bell", color: "pink", desc: "Báo cho bạn khi nào và qua kênh nào" },
 ] as const;
 export type SettingsSlug = (typeof SETTINGS_MENU)[number]["slug"];

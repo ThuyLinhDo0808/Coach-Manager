@@ -3,6 +3,7 @@ import type { CourseOption, PostAdmin, ReviewAdmin, VideoAdmin, VideoGroupAdmin 
 import { mergeTemplates, type MessageTemplate } from "@/lib/message-templates";
 import type { CourseAdmin, InviteRow, MemberRow, VenueAdmin } from "@/lib/settings-types";
 import { serverClient } from "@/lib/supabase/server";
+import { readRules } from "@/lib/venue-price";
 
 // Đọc dữ liệu cho Cài đặt và Nội dung theo phiên đăng nhập (RLS quyết định quyền).
 
@@ -10,12 +11,13 @@ export async function getAdminVenues(coachId: string): Promise<VenueAdmin[]> {
   const supabase = await serverClient();
   const { data, error } = await supabase
     .from("venues")
-    .select("id, name, address, district, image_url, maps_url, hours_text, is_public, sort, court_count, rent_per_hour")
+    .select("*")
     .eq("coach_id", coachId)
     .order("sort")
     .order("created_at");
   if (error) throw error;
-  return data as VenueAdmin[];
+  // price_rules có từ migration 20261127000000_venue_prices.sql; chưa chạy thì coi như chưa có bảng giá.
+  return (data as (VenueAdmin & { price_rules?: unknown })[]).map((v) => ({ ...v, price_rules: readRules(v.price_rules) }));
 }
 
 export async function getCourseTemplates(coachId: string): Promise<CourseAdmin[]> {

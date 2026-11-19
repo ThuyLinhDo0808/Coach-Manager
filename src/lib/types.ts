@@ -182,7 +182,7 @@ export type LeadNote = {
 };
 
 export type MemberRole = "owner" | "quan-ly" | "coach" | "sale" | "tro-giang" | "co-dong";
-export const ROLE_LABEL: Record<MemberRole, string> = { owner: "Coach chủ", "quan-ly": "Quản lý đào tạo", coach: "Coach", sale: "Sale", "tro-giang": "Trợ giảng", "co-dong": "Cổ đông" };
+export const ROLE_LABEL: Record<MemberRole, string> = { owner: "Team Leader", "quan-ly": "Quản lý đào tạo", coach: "Coach", sale: "Sale", "tro-giang": "Trợ giảng", "co-dong": "Cổ đông" };
 export type Member = { user_id: string; role: MemberRole; roles?: string[]; display_name: string | null; commission_pct?: number; wage_per_session?: number };
 
 export type PostTopic = "luat" | "ky-thuat" | "chien-thuat" | "the-luc" | "dung-cu";

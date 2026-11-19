@@ -111,14 +111,13 @@ export const MENU: MenuGroup[] = [
     key: "cai-dat", label: "Cài đặt", icon: "gear", color: "slate", section: "trung-tam",
     children: [
       { label: "Hồ sơ trung tâm", href: `${Q}/cai-dat/ho-so`, perm: "cai-dat", also: new RegExp(`^${Q}/cai-dat/?$`) },
-      { label: "Quy định lớp", href: `${Q}/cai-dat/quy-dinh`, perm: "cai-dat" },
+      { label: "Quy định lớp học", href: `${Q}/cai-dat/quy-dinh`, perm: "cai-dat" },
       { label: "Tỉ lệ chia & cổ đông", href: `${Q}/cai-dat/ti-le`, perm: "ti-le" },
       { label: "Thanh toán", href: `${Q}/cai-dat/nhan-tien`, perm: "cai-dat" },
       { label: "Phân quyền", href: `${Q}/cai-dat/thanh-vien`, perm: "cai-dat" },
       { label: "Sân dạy", href: `${Q}/cai-dat/san`, perm: "cai-dat" },
       { label: "Mẫu tin nhắn", href: `${Q}/cai-dat/mau-tin`, perm: "cai-dat" },
       { label: "Thông báo", href: `${Q}/cai-dat/thong-bao`, perm: "cai-dat" },
-      { label: "Tên miền riêng", href: `${Q}/cai-dat/ten-mien`, perm: "cai-dat" },
     ],
   },
 ];

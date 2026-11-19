@@ -107,12 +107,6 @@ export default async function LichSanPage({ searchParams }: { searchParams: Prom
                       {v.address}
                     </div>
                   )}
-                  {v.hours_text && (
-                    <div className="mt-1 flex items-start gap-1.5 text-[13px] text-muted">
-                      <Icon name="clock" size={15} className="mt-0.5" />
-                      Giờ coach dạy: {v.hours_text}
-                    </div>
-                  )}
                   {v.maps_url && (
                     <a href={v.maps_url} target="_blank" rel="noopener noreferrer" className="btn sm ghost mt-3">
                       <Icon name="map" size={15} /> Mở Google Maps

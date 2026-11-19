@@ -7,7 +7,6 @@ import { fieldErrors } from "@/lib/lead-schema";
 import { requireOwner, saveSettings } from "@/lib/owner";
 import {
   courseSchema,
-  domainSchema,
   inviteSchema,
   primaryRole,
   memberSchema,
@@ -58,7 +57,9 @@ export async function saveVenue(_prev: FormState, payload: unknown): Promise<For
     const { data, error } = await supabase.from("venues").update(venue).eq("id", id).eq("coach_id", session.coach.id).select("id");
     if (error || !data.length) return failed("saveVenue", error);
   } else {
-    const { error } = await supabase.from("venues").insert({ ...venue, coach_id: session.coach.id });
+    // Sân mới xếp cuối danh sách.
+    const { count } = await supabase.from("venues").select("id", { count: "exact", head: true }).eq("coach_id", session.coach.id);
+    const { error } = await supabase.from("venues").insert({ ...venue, coach_id: session.coach.id, sort: count ?? 0 });
     if (error) return failed("saveVenue", error);
   }
   refresh();
@@ -154,23 +155,13 @@ export async function saveNotify(_prev: FormState, payload: unknown): Promise<Fo
   return SAVED;
 }
 
-export async function saveDomain(_prev: FormState, payload: unknown): Promise<FormState> {
-  const session = await requireOwner();
-  const parsed = domainSchema.safeParse(payload);
-  if (!parsed.success) return invalid(parsed.error);
-  if (!(await saveSettings(session.coach.id, parsed.data))) return failed("saveDomain", null);
-  revalidatePath(BASE, "layout");
-  return SAVED;
-}
-
-// ---------------------------------------------------------------- thành viên & lời mời
 export async function saveMember(_prev: FormState, payload: unknown): Promise<FormState> {
   const session = await requireOwner();
   const parsed = memberSchema.safeParse(payload);
   if (!parsed.success) return invalid(parsed.error);
   const { user_id, ...member } = parsed.data;
   if (user_id === session.userId && !member.roles.includes("chu")) {
-    return { ok: false, message: "Bạn không tự bỏ vai trò coach chủ của chính mình được.", errors: { roles: "Giữ vai trò Coach chủ" } };
+    return { ok: false, message: "Bạn không tự bỏ vai trò Team Leader của chính mình được.", errors: { roles: "Giữ vai trò Team Leader" } };
   }
 
   const supabase = await serverClient();
@@ -180,8 +171,8 @@ export async function saveMember(_prev: FormState, payload: unknown): Promise<Fo
     .eq("coach_id", session.coach.id)
     .eq("user_id", user_id)
     .select("user_id");
-  if (error?.message.includes("last_owner")) return { ok: false, message: "Đội cần ít nhất một coach chủ." };
-  if (error?.message.includes("cannot_change_self")) return { ok: false, message: "Bạn không tự bỏ vai trò coach chủ của mình được." };
+  if (error?.message.includes("last_owner")) return { ok: false, message: "Đội cần ít nhất một Team Leader." };
+  if (error?.message.includes("cannot_change_self")) return { ok: false, message: "Bạn không tự bỏ vai trò Team Leader của mình được." };
   if (error || !data.length) return failed("saveMember", error);
   revalidatePath("/quan-ly", "layout");
   return SAVED;

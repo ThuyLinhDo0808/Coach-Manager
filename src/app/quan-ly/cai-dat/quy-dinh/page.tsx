@@ -2,7 +2,7 @@ import { RulesForm } from "@/components/settings/rules-form";
 import { requireOwner } from "@/lib/owner";
 import { getSettings } from "@/lib/settings";
 
-export const metadata = { title: "Quy định lớp" };
+export const metadata = { title: "Quy định lớp học" };
 
 export default async function QuyDinhPage() {
   const session = await requireOwner();
