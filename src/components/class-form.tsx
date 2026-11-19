@@ -6,10 +6,11 @@ import { createClass } from "@/app/quan-ly/_actions/teaching";
 import { CLASS_KINDS, generateSessions } from "@/lib/teaching";
 import { dmy, vnDate, WEEKDAY_SHORT } from "@/lib/time";
 
+type Person = { id: string; name: string };
 type Course = { id: string; title: string; session_count: number | null; minutes_per_session: number | null; max_students: number | null; price_full: number | null };
 
 /** Tạo lịch học: chọn mẫu khoá, sân, thứ + giờ, xem trước "Sẽ tạo N buổi". */
-export function ClassForm({ courses, venues }: { courses: Course[]; venues: { id: string; name: string }[] }) {
+export function ClassForm({ courses, venues, coaches, assistants, meId }: { courses: Course[]; venues: { id: string; name: string }[]; coaches: Person[]; assistants: Person[]; meId: string }) {
   const [state, action, pending] = useActionState(createClass, null);
   const [courseId, setCourseId] = useState("");
   const [title, setTitle] = useState("");
@@ -111,9 +112,32 @@ export function ClassForm({ courses, venues }: { courses: Course[]; venues: { id
           <input id="c_price" name="price" inputMode="numeric" className="input" value={price} onChange={(e) => setPrice(e.target.value.replace(/\D/g, ""))} />
         </div>
       </div>
+      <div className="grid gap-3.5 md:grid-cols-2">
+        <div className="field">
+          <label htmlFor="c_coach">Coach dạy chính</label>
+          <select id="c_coach" name="main_coach_id" className="input" defaultValue={coaches.some((c) => c.id === meId) ? meId : (coaches[0]?.id ?? "")}>
+            <option value="">Chưa phân công</option>
+            {coaches.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+          </select>
+        </div>
+        <div className="field">
+          <label htmlFor="c_tg">Trợ giảng</label>
+          <select id="c_tg" name="assistant_id" className="input" defaultValue="">
+            <option value="">Không có</option>
+            {assistants.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+          </select>
+        </div>
+      </div>
       <label className="flex items-center gap-2 text-[13px] font-semibold">
         <input type="checkbox" name="is_recruiting" defaultChecked className="size-4 accent-[#16284d]" />
         Hiện ở “Lớp đang tuyển” trên trang công khai
+      </label>
+      <label className="flex items-start gap-2 text-[13px] font-semibold">
+        <input type="checkbox" name="center_pays_court" className="mt-0.5 size-4 accent-[#16284d]" />
+        <span>
+          Lớp đặc thù: trung tâm chịu tiền sân / bóng
+          <span className="block font-normal text-faint">Mặc định học viên tự trả tiền sân, bóng (ngoài học phí). Bật khi trung tâm trả thay, ví dụ lớp ghép.</span>
+        </span>
       </label>
       <div className="soft text-[13px]" aria-live="polite">
         {preview.length ? (

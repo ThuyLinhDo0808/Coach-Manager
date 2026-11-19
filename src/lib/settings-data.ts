@@ -46,11 +46,15 @@ export async function getMemberRows(coachId: string): Promise<MemberRow[]> {
   const supabase = await serverClient();
   const { data, error } = await supabase
     .from("coach_members")
-    .select("user_id, role, display_name, email, commission_pct, wage_per_session, created_at")
+    .select("*")
     .eq("coach_id", coachId)
     .order("created_at");
   if (error) throw error;
-  return data.map((m) => ({ ...m, commission_pct: Number(m.commission_pct) })) as MemberRow[];
+  return data.map((m) => ({
+    ...m,
+    commission_pct: Number(m.commission_pct),
+    roles: m.roles?.length ? m.roles : m.role === "owner" ? ["chu", "coach"] : [m.role],
+  })) as MemberRow[];
 }
 
 /** Lời mời chưa được nhận. */
@@ -58,12 +62,12 @@ export async function getPendingInvites(coachId: string): Promise<InviteRow[]> {
   const supabase = await serverClient();
   const { data, error } = await supabase
     .from("member_invites")
-    .select("id, email, role, display_name, created_at")
+    .select("*")
     .eq("coach_id", coachId)
     .is("accepted_at", null)
     .order("created_at");
   if (error) throw error;
-  return data as InviteRow[];
+  return data.map((i) => ({ ...i, roles: i.roles?.length ? i.roles : [i.role] })) as InviteRow[];
 }
 
 export async function getMessageTemplates(coachId: string): Promise<MessageTemplate[]> {

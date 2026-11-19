@@ -7,7 +7,7 @@ import { vnDate } from "@/lib/time";
 // Xuất sổ thu chi của một tháng thành CSV (mở được bằng Excel).
 export async function GET(request: NextRequest) {
   const session = await requireSession();
-  if (session.role !== "owner") return new NextResponse("Không có quyền", { status: 403 });
+  if (!session.perms.includes("tai-chinh")) return new NextResponse("Không có quyền", { status: 403 });
   const asked = request.nextUrl.searchParams.get("thang");
   const month = isMonth(asked) ? asked : vnDate().slice(0, 7);
   const { from, to } = monthRange(month);

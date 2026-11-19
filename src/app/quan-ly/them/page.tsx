@@ -3,18 +3,17 @@ import { PageHead } from "@/components/admin-shell";
 import { Icon, Tile } from "@/components/icon";
 import { requireSession } from "@/lib/auth";
 import { menuFor, SECTIONS } from "@/lib/menu";
-import { permsOf } from "@/lib/permissions";
-import { ROLE_LABEL } from "@/lib/types";
+import { roleLabel } from "@/lib/permissions";
 import { signOut } from "../../dang-nhap/actions";
 
 export const metadata = { title: "Thêm" };
 
 export default async function ThemPage() {
   const session = await requireSession();
-  const menu = menuFor(permsOf(session.role));
+  const menu = menuFor((p) => session.perms.includes(p));
   return (
     <>
-      <PageHead icon="more" color="slate" title="Thêm" sub={`${session.memberName ?? session.email} · ${ROLE_LABEL[session.role]}`} />
+      <PageHead icon="more" color="slate" title="Thêm" sub={`${session.memberName ?? session.email} · ${session.roles.map(roleLabel).join(", ")}`} />
       <div className="grid items-start gap-4 md:grid-cols-2">
         <div className="grid gap-4">
           {SECTIONS.map((s) => {

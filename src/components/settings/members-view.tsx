@@ -4,19 +4,21 @@ import { Avatar } from "@/components/avatar";
 import { Icon } from "@/components/icon";
 import { InviteForm, MemberForm, PermissionsForm } from "@/components/settings/member-forms";
 import { SettingsShell } from "@/components/settings/shell";
-import { formatVnd } from "@/lib/format";
 import type { CoachSettings } from "@/lib/settings";
 import type { InviteRow, MemberRow } from "@/lib/settings-types";
-import { ROLE_LABEL, type MemberRole } from "@/lib/types";
+import { roleLabel, type Role } from "@/lib/permissions";
 
 const BASE = "/quan-ly/cai-dat/thanh-vien";
-const COLOR: Record<MemberRole, string> = { owner: "var(--amber)", sale: "var(--pink)", "tro-giang": "var(--cyan)" };
-
-function pay(m: MemberRow): string | null {
-  if (m.role === "sale") return m.commission_pct > 0 ? `${String(m.commission_pct).replace(".", ",")}% / khoá chốt` : null;
-  if (m.role === "tro-giang") return m.wage_per_session > 0 ? `${formatVnd(m.wage_per_session)!.replace("đ", " đ")} / buổi` : null;
-  return null;
-}
+const COLOR: Record<Role, string> = {
+  chu: "var(--amber)", "quan-ly": "var(--indigo)", "co-dong": "var(--slate)", coach: "var(--teal)", sale: "var(--pink)", "tro-giang": "var(--cyan)",
+};
+const Roles = ({ roles }: { roles: Role[] }) => (
+  <span className="flex flex-wrap gap-1">
+    {roles.map((r) => (
+      <span key={r} className="pill n">{roleLabel(r)}</span>
+    ))}
+  </span>
+);
 
 export function MembersView({
   members,
@@ -32,10 +34,10 @@ export function MembersView({
   editId?: string;
 }) {
   const editing = members.find((m) => m.user_id === editId) ?? null;
-  const count = (r: MemberRole) => members.filter((m) => m.role === r).length;
-  const sub = [`${count("sale")} sale`, `${count("tro-giang")} trợ giảng`, invites.length ? `${invites.length} lời mời đang chờ` : null].filter(Boolean).join(", ");
-  const nameOf = (m: MemberRow) => m.display_name ?? m.email ?? ROLE_LABEL[m.role];
-  const face = (name: string, role: MemberRole, size: number) => <Avatar name={name} size={size} style={{ background: COLOR[role], color: "#fff" }} />;
+  const count = (r: Role) => members.filter((m) => m.roles.includes(r)).length;
+  const sub = [`${members.length} người`, `${count("coach")} coach`, `${count("sale")} sale`, `${count("tro-giang")} trợ giảng`, invites.length ? `${invites.length} lời mời đang chờ` : null].filter(Boolean).join(", ");
+  const nameOf = (m: MemberRow) => m.display_name ?? m.email ?? roleLabel(m.roles[0]);
+  const face = (name: string, roles: Role[], size: number) => <Avatar name={name} size={size} style={{ background: COLOR[roles[0]] ?? "var(--slate)", color: "#fff" }} />;
   const revoke = (i: InviteRow) => (
     <form action={revokeInvite}>
       <input type="hidden" name="id" value={i.id} />
@@ -60,7 +62,6 @@ export function MembersView({
             <tr>
               <th style={{ paddingLeft: 0 }}>Người</th>
               <th>Vai trò</th>
-              <th style={{ textAlign: "right" }}>Hoa hồng / lương</th>
               <th>Trạng thái</th>
               <th />
             </tr>
@@ -70,7 +71,7 @@ export function MembersView({
               <tr key={m.user_id}>
                 <td style={{ paddingLeft: 0 }}>
                   <span className="flex items-center gap-2.5">
-                    {face(nameOf(m), m.role, 32)}
+                    {face(nameOf(m), m.roles, 32)}
                     <span className="min-w-0">
                       <b className="block truncate">
                         {nameOf(m)}
@@ -81,10 +82,7 @@ export function MembersView({
                   </span>
                 </td>
                 <td>
-                  <span className="pill n">{ROLE_LABEL[m.role]}</span>
-                </td>
-                <td className="num" style={{ textAlign: "right" }}>
-                  {pay(m) ?? <span className="text-faint">—</span>}
+                  <Roles roles={m.roles} />
                 </td>
                 <td>
                   <span className="pill good">Đang hoạt động</span>
@@ -100,7 +98,7 @@ export function MembersView({
               <tr key={i.id}>
                 <td style={{ paddingLeft: 0 }}>
                   <span className="flex items-center gap-2.5">
-                    {face(i.display_name ?? i.email, i.role, 32)}
+                    {face(i.display_name ?? i.email, i.roles, 32)}
                     <span className="min-w-0">
                       <b className="block truncate">{i.display_name ?? i.email}</b>
                       {i.display_name && <span className="block truncate text-[13px] text-faint">{i.email}</span>}
@@ -108,10 +106,7 @@ export function MembersView({
                   </span>
                 </td>
                 <td>
-                  <span className="pill n">{ROLE_LABEL[i.role]}</span>
-                </td>
-                <td className="text-faint" style={{ textAlign: "right" }}>
-                  —
+                  <Roles roles={i.roles} />
                 </td>
                 <td>
                   <span className="pill warn">Chờ nhận lời mời</span>
@@ -127,25 +122,25 @@ export function MembersView({
         <div className="only-m">
           {members.map((m) => (
             <Link key={m.user_id} href={`${BASE}?sua=${m.user_id}#sua`} className="divide-row flex items-center gap-2.5 py-[11px]">
-              {face(nameOf(m), m.role, 36)}
+              {face(nameOf(m), m.roles, 36)}
               <div className="min-w-0 flex-1">
                 <div className="flex items-center justify-between gap-2">
                   <b className="min-w-0 truncate">
-                    {nameOf(m)} · {ROLE_LABEL[m.role]}
+                    {nameOf(m)}
                   </b>
                   <span className="pill good">Hoạt động</span>
                 </div>
-                <div className="truncate text-[13px] text-faint">{[m.user_id === selfId ? "Bạn" : null, pay(m), m.display_name ? m.email : null].filter(Boolean).join(" · ") || "Bấm để sửa"}</div>
+                <div className="truncate text-[13px] text-faint">{[m.user_id === selfId ? "Bạn" : null, m.roles.map(roleLabel).join(", ")].filter(Boolean).join(" · ")}</div>
               </div>
             </Link>
           ))}
           {invites.map((i) => (
             <div key={i.id} className="divide-row flex items-center gap-2.5 py-[11px]">
-              {face(i.display_name ?? i.email, i.role, 36)}
+              {face(i.display_name ?? i.email, i.roles, 36)}
               <div className="min-w-0 flex-1">
                 <div className="flex items-center justify-between gap-2">
                   <b className="min-w-0 truncate">
-                    {i.display_name ?? i.email} · {ROLE_LABEL[i.role]}
+                    {i.display_name ?? i.email} · {i.roles.map(roleLabel).join(", ")}
                   </b>
                   <span className="pill warn">Chờ nhận</span>
                 </div>

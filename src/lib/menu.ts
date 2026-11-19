@@ -7,7 +7,7 @@ import type { Perm } from "@/lib/permissions";
 export type MenuChild = {
   label: string;
   href?: string;
-  perm?: Perm;
+  perm: Perm;
   /** Đường dẫn khác cũng tính là đang ở mục con này (ví dụ trang chi tiết). */
   also?: RegExp;
 };
@@ -19,7 +19,6 @@ export type MenuGroup = {
   icon: IconName;
   color: string;
   section: "hang-ngay" | "kinh-doanh" | "trung-tam";
-  perm: Perm;
   children: MenuChild[];
 };
 
@@ -34,90 +33,90 @@ const UUID = "[0-9a-f-]{36}";
 
 export const MENU: MenuGroup[] = [
   {
-    key: "tong-quan", label: "Tổng quan", icon: "home", color: "blue", section: "hang-ngay", perm: "tong-quan",
+    key: "tong-quan", label: "Tổng quan", icon: "home", color: "blue", section: "hang-ngay",
     children: [
-      { label: "Hôm nay", href: Q },
-      { label: "Cần xử lý" },
+      { label: "Hôm nay", href: Q, perm: "tong-quan" },
+      { label: "Cần xử lý", href: `${Q}/can-xu-ly`, perm: "can-xu-ly" },
     ],
   },
   {
-    key: "lich", label: "Lịch", icon: "cal", color: "cyan", section: "hang-ngay", perm: "lich",
+    key: "lich", label: "Lịch", icon: "cal", color: "cyan", section: "hang-ngay",
     children: [
-      { label: "Lịch của tôi" },
+      { label: "Lịch của tôi", href: `${Q}/lich-day/cua-toi`, perm: "lich-cua-toi" },
       { label: "Lịch trung tâm", href: `${Q}/lich-day`, perm: "lich-trung-tam" },
       { label: "Lịch rảnh 1-1", href: `${Q}/lich-day/gio-ranh`, perm: "lich-trung-tam" },
-      { label: "Điểm danh", href: `${Q}/lich-day/diem-danh`, also: new RegExp(`^${Q}/lich-day/${UUID}`) },
+      { label: "Điểm danh", href: `${Q}/lich-day/diem-danh`, perm: "diem-danh", also: new RegExp(`^${Q}/lich-day/${UUID}`) },
     ],
   },
   {
-    key: "hoc-vien", label: "Học viên", icon: "users", color: "violet", section: "hang-ngay", perm: "hoc-vien",
+    key: "hoc-vien", label: "Học viên", icon: "users", color: "violet", section: "hang-ngay",
     children: [
-      { label: "Danh sách", href: `${Q}/hoc-vien`, also: new RegExp(`^${Q}/hoc-vien/${UUID}`) },
-      { label: "Gói đã mua" },
-      { label: "Tiến độ kỹ năng" },
-      { label: "Đánh giá", href: `${Q}/hoc-vien/danh-gia`, perm: "noi-dung" },
+      { label: "Danh sách", href: `${Q}/hoc-vien`, perm: "hoc-vien", also: new RegExp(`^${Q}/hoc-vien/${UUID}`) },
+      { label: "Gói đã mua", href: `${Q}/hoc-vien/goi`, perm: "hoc-vien" },
+      { label: "Tiến độ kỹ năng", perm: "hoc-vien" },
+      { label: "Đánh giá", href: `${Q}/hoc-vien/danh-gia`, perm: "danh-gia" },
     ],
   },
   {
-    key: "lop", label: "Lớp & khoá học", short: "Lớp", icon: "book", color: "indigo", section: "hang-ngay", perm: "lop",
+    key: "lop", label: "Lớp & khoá học", short: "Lớp", icon: "book", color: "indigo", section: "hang-ngay",
     children: [
-      { label: "Lớp", href: `${Q}/khoa-hoc`, also: new RegExp(`^${Q}/khoa-hoc/${UUID}`) },
-      { label: "Gói buổi", href: `${Q}/cai-dat/mau-khoa`, perm: "cai-dat" },
-      { label: "Giáo án", href: `${Q}/noi-dung`, perm: "noi-dung" },
+      { label: "Lớp", href: `${Q}/khoa-hoc`, perm: "lop", also: new RegExp(`^${Q}/khoa-hoc/${UUID}`) },
+      { label: "Gói buổi", href: `${Q}/cai-dat/mau-khoa`, perm: "goi-buoi" },
+      { label: "Giáo án", href: `${Q}/noi-dung`, perm: "giao-an" },
     ],
   },
   {
-    key: "tuyen-sinh", label: "Tuyển sinh", icon: "inbox", color: "pink", section: "kinh-doanh", perm: "tuyen-sinh",
+    key: "tuyen-sinh", label: "Tuyển sinh", icon: "inbox", color: "pink", section: "kinh-doanh",
     children: [
-      { label: "Nhu cầu", href: `${Q}/nhu-cau` },
-      { label: "Học thử" },
-      { label: "Danh sách chờ" },
-      { label: "Form & trang công khai", href: `${Q}/nhu-cau/form` },
+      { label: "Nhu cầu", href: `${Q}/nhu-cau`, perm: "tuyen-sinh" },
+      { label: "Học thử", href: `${Q}/nhu-cau/hoc-thu`, perm: "tuyen-sinh" },
+      { label: "Danh sách chờ", href: `${Q}/nhu-cau/cho`, perm: "tuyen-sinh" },
+      { label: "Form & trang công khai", href: `${Q}/nhu-cau/form`, perm: "tuyen-sinh" },
     ],
   },
   {
-    key: "tai-chinh", label: "Tài chính", icon: "wallet", color: "emerald", section: "kinh-doanh", perm: "tai-chinh",
+    key: "tai-chinh", label: "Tài chính", icon: "wallet", color: "emerald", section: "kinh-doanh",
     children: [
-      { label: "Sổ thu chi", href: `${Q}/thu-chi` },
-      { label: "Công nợ học viên", href: `${Q}/thu-chi/cong-no` },
-      { label: "Chia tiền tháng" },
-      { label: "Chi trả" },
-      { label: "Trợ giảng" },
-      { label: "Các quỹ" },
-      { label: "Báo cáo lãi / lỗ" },
+      { label: "Sổ thu chi", href: `${Q}/thu-chi`, perm: "tai-chinh" },
+      { label: "Công nợ học viên", href: `${Q}/thu-chi/cong-no`, perm: "tai-chinh" },
+      { label: "Chia tiền tháng", perm: "tai-chinh" },
+      { label: "Chi trả", perm: "tai-chinh" },
+      { label: "Trợ giảng", perm: "tro-giang-bang" },
+      { label: "Các quỹ", perm: "quy-xem" },
+      { label: "Báo cáo lãi / lỗ", perm: "bao-cao" },
     ],
   },
   {
-    key: "thong-ke", label: "Thống kê", icon: "chart", color: "amber", section: "kinh-doanh", perm: "thong-ke",
+    key: "thong-ke", label: "Thống kê", icon: "chart", color: "amber", section: "kinh-doanh",
     children: [
-      { label: "Doanh thu", href: `${Q}/thong-ke` },
-      { label: "Tuyển sinh" },
-      { label: "Học viên" },
-      { label: "Hiệu suất coach" },
+      { label: "Doanh thu", href: `${Q}/thong-ke`, perm: "thong-ke" },
+      { label: "Tuyển sinh", perm: "thong-ke" },
+      { label: "Học viên", perm: "thong-ke" },
+      { label: "Hiệu suất coach", perm: "thong-ke" },
     ],
   },
   {
-    key: "doi-ngu", label: "Đội ngũ", icon: "team", color: "teal", section: "trung-tam", perm: "doi-ngu",
+    key: "doi-ngu", label: "Đội ngũ", icon: "team", color: "teal", section: "trung-tam",
     children: [
-      { label: "Coach" },
-      { label: "Sale" },
-      { label: "Trợ giảng" },
-      { label: "Phân công lớp" },
-      { label: "Bảng công" },
+      { label: "Coach", href: `${Q}/doi-ngu`, perm: "doi-ngu" },
+      { label: "Sale", href: `${Q}/doi-ngu/sale`, perm: "doi-ngu" },
+      { label: "Trợ giảng", href: `${Q}/doi-ngu/tro-giang`, perm: "doi-ngu" },
+      { label: "Phân công lớp", href: `${Q}/doi-ngu/phan-cong`, perm: "phan-cong" },
+      { label: "Bảng công", href: `${Q}/doi-ngu/bang-cong`, perm: "bang-cong" },
     ],
   },
   {
-    key: "cai-dat", label: "Cài đặt", icon: "gear", color: "slate", section: "trung-tam", perm: "cai-dat",
+    key: "cai-dat", label: "Cài đặt", icon: "gear", color: "slate", section: "trung-tam",
     children: [
-      { label: "Hồ sơ trung tâm", href: `${Q}/cai-dat/ho-so`, also: new RegExp(`^${Q}/cai-dat/?$`) },
-      { label: "Quy định lớp", href: `${Q}/cai-dat/quy-dinh` },
-      { label: "Tỉ lệ chia & cổ đông" },
-      { label: "Thanh toán", href: `${Q}/cai-dat/nhan-tien` },
-      { label: "Phân quyền", href: `${Q}/cai-dat/thanh-vien` },
-      { label: "Sân dạy", href: `${Q}/cai-dat/san` },
-      { label: "Mẫu tin nhắn", href: `${Q}/cai-dat/mau-tin` },
-      { label: "Thông báo", href: `${Q}/cai-dat/thong-bao` },
-      { label: "Tên miền riêng", href: `${Q}/cai-dat/ten-mien` },
+      { label: "Hồ sơ trung tâm", href: `${Q}/cai-dat/ho-so`, perm: "cai-dat", also: new RegExp(`^${Q}/cai-dat/?$`) },
+      { label: "Quy định lớp", href: `${Q}/cai-dat/quy-dinh`, perm: "cai-dat" },
+      { label: "Tỉ lệ chia & cổ đông", perm: "ti-le" },
+      { label: "Thanh toán", href: `${Q}/cai-dat/nhan-tien`, perm: "cai-dat" },
+      { label: "Phân quyền", href: `${Q}/cai-dat/thanh-vien`, perm: "cai-dat" },
+      { label: "Sân dạy", href: `${Q}/cai-dat/san`, perm: "cai-dat" },
+      { label: "Mẫu tin nhắn", href: `${Q}/cai-dat/mau-tin`, perm: "cai-dat" },
+      { label: "Thông báo", href: `${Q}/cai-dat/thong-bao`, perm: "cai-dat" },
+      { label: "Tên miền riêng", href: `${Q}/cai-dat/ten-mien`, perm: "cai-dat" },
     ],
   },
 ];
@@ -141,8 +140,7 @@ export function activeChild(pathname: string, menu: MenuGroup[] = MENU): { group
 /** Lọc menu theo quyền: bỏ mục con không được phép, bỏ nhóm không còn mục con nào có trang. */
 export function menuFor(can: (p: Perm) => boolean, menu: MenuGroup[] = MENU): MenuGroup[] {
   return menu
-    .filter((g) => can(g.perm))
-    .map((g) => ({ ...g, children: g.children.filter((c) => !c.perm || can(c.perm)) }))
+    .map((g) => ({ ...g, children: g.children.filter((c) => can(c.perm)) }))
     .filter((g) => g.children.some((c) => c.href));
 }
 

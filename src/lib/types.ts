@@ -161,6 +161,12 @@ export type Lead = {
   contacted_at: string | null;
   origin: LeadOrigin;
   remind_on: string | null;
+  /** Người chốt (sale nhận 10%); bắt buộc khi Đã chốt. */
+  closer_id?: string | null;
+  closed_at?: string | null;
+  /** Quản lý đào tạo đã xác nhận / xếp lớp sau khi chốt. */
+  ops_confirmed_by?: string | null;
+  ops_confirmed_at?: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -175,9 +181,9 @@ export type LeadNote = {
   created_at: string;
 };
 
-export type MemberRole = "owner" | "sale" | "tro-giang";
-export const ROLE_LABEL: Record<MemberRole, string> = { owner: "Coach", sale: "Sale", "tro-giang": "Trợ giảng" };
-export type Member = { user_id: string; role: MemberRole; display_name: string | null; commission_pct?: number; wage_per_session?: number };
+export type MemberRole = "owner" | "quan-ly" | "coach" | "sale" | "tro-giang" | "co-dong";
+export const ROLE_LABEL: Record<MemberRole, string> = { owner: "Coach chủ", "quan-ly": "Quản lý đào tạo", coach: "Coach", sale: "Sale", "tro-giang": "Trợ giảng", "co-dong": "Cổ đông" };
+export type Member = { user_id: string; role: MemberRole; roles?: string[]; display_name: string | null; commission_pct?: number; wage_per_session?: number };
 
 export type PostTopic = "luat" | "ky-thuat" | "chien-thuat" | "the-luc" | "dung-cu";
 export const POST_TOPICS: { value: PostTopic; label: string }[] = [

@@ -2,7 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { requireSession } from "@/lib/auth";
+import { can, requirePerm, requireSession } from "@/lib/auth";
+import type { Perm } from "@/lib/permissions";
 import { normalizePhone } from "@/lib/format";
 import { serverClient } from "@/lib/supabase/server";
 import { generateSessions, SKILLS, type AttendanceStatus } from "@/lib/teaching";
@@ -21,8 +22,8 @@ const dec = (f: FormData, k: string) => {
   return /^\d(\.\d{1,2})?$/.test(v) ? Number(v) : null;
 };
 
-async function ctx() {
-  const session = await requireSession();
+async function ctx(...perms: Perm[]) {
+  const session = perms.length ? await requirePerm(...perms) : await requireSession();
   return { session, coachId: session.coach.id, db: await serverClient() };
 }
 const refresh = () => {
@@ -33,7 +34,7 @@ const refresh = () => {
 
 // ---------------------------------------------------------------- lớp
 export async function createClass(_p: FormState, f: FormData): Promise<FormState> {
-  const { coachId, db } = await ctx();
+  const { coachId, db } = await ctx("lop-sua");
   const title = str(f, "title", 120);
   if (title.length < 2) return { message: "Bạn đặt tên lớp nhé." };
   const kind = str(f, "kind");
@@ -59,6 +60,9 @@ export async function createClass(_p: FormState, f: FormData): Promise<FormState
       max_students: int(f, "max_students"),
       price: int(f, "price"),
       is_recruiting: f.get("is_recruiting") === "on",
+      main_coach_id: opt(f, "main_coach_id"),
+      assistant_id: opt(f, "assistant_id"),
+      center_pays_court: f.get("center_pays_court") === "on",
     })
     .select("id")
     .single();
@@ -88,7 +92,7 @@ export async function createClass(_p: FormState, f: FormData): Promise<FormState
 }
 
 export async function updateClass(f: FormData) {
-  const { coachId, db } = await ctx();
+  const { coachId, db } = await ctx("lop-sua");
   const id = str(f, "id");
   const patch: Record<string, unknown> = {};
   if (f.has("title")) patch.title = str(f, "title", 120);
@@ -98,14 +102,29 @@ export async function updateClass(f: FormData) {
   if (f.has("max_students")) patch.max_students = int(f, "max_students");
   if (f.has("price")) patch.price = int(f, "price");
   if (f.has("recruiting_flag")) patch.is_recruiting = f.get("is_recruiting") === "on";
+  if (f.has("recruiting_flag")) patch.center_pays_court = f.get("center_pays_court") === "on";
+  if (f.has("main_coach_id")) patch.main_coach_id = opt(f, "main_coach_id");
+  if (f.has("assistant_id")) patch.assistant_id = opt(f, "assistant_id");
+  const { data: before } = await db.from("classes").select("main_coach_id, assistant_id").eq("id", id).eq("coach_id", coachId).maybeSingle();
   const { error } = await db.from("classes").update(patch).eq("id", id).eq("coach_id", coachId);
   if (error) throw error;
+  // Đổi coach dạy chính / trợ giảng: áp cho các buổi chưa diễn ra đang theo người cũ (buổi dạy thay giữ nguyên).
+  const now = new Date().toISOString();
+  for (const [col, key] of [["teacher_id", "main_coach_id"], ["assistant_id", "assistant_id"]] as const) {
+    if (!(key in patch) || !before || before[key] === patch[key]) continue;
+    let q = db.from("class_sessions").update({ [col]: patch[key] }).eq("class_id", id).eq("status", "du-kien").gt("starts_at", now);
+    q = before[key] ? q.eq(col, before[key]) : q.is(col, null);
+    const { error: e2 } = await q;
+    if (e2) throw e2;
+  }
   refresh();
 }
 
 export async function addSession(_p: FormState, f: FormData): Promise<FormState> {
-  const { coachId, db } = await ctx();
+  const { session: me, coachId, db } = await ctx("lop-sua", "tuyen-sinh");
   const classId = opt(f, "class_id");
+  // Buổi của lớp: người sửa lớp. Buổi học thử (không có lớp): người làm tuyển sinh.
+  if (classId ? !can(me, "lop-sua") : !can(me, "tuyen-sinh")) return { message: "Bạn không có quyền thêm buổi này." };
   const date = str(f, "date");
   const time = str(f, "time");
   const minutes = int(f, "minutes") ?? 90;
@@ -129,6 +148,7 @@ export async function addSession(_p: FormState, f: FormData): Promise<FormState>
       ends_at: vnIso(date, addMinutes(time, minutes)),
       venue_id: opt(f, "venue_id"),
       topic: opt(f, "topic", 200),
+      ...(opt(f, "teacher_id") ? { teacher_id: opt(f, "teacher_id") } : {}),
     });
   if (error) {
     console.error("addSession", error);
@@ -136,9 +156,8 @@ export async function addSession(_p: FormState, f: FormData): Promise<FormState>
   }
   if (leadId) {
     await db.from("leads").update({ status: "hen-hoc-thu", contacted_at: new Date().toISOString() }).eq("id", leadId).eq("coach_id", coachId).in("status", ["moi", "da-lien-he"]);
-    const session = await requireSession();
     await db.from("lead_notes").insert({
-      coach_id: coachId, lead_id: leadId, author_id: session.userId, kind: "hen",
+      coach_id: coachId, lead_id: leadId, author_id: me.userId, kind: "hen",
       body: `Hẹn học thử ${time} ngày ${date.split("-").reverse().join("/")}`,
     });
   }
@@ -148,14 +167,21 @@ export async function addSession(_p: FormState, f: FormData): Promise<FormState>
 }
 
 export async function updateSession(f: FormData) {
-  const { coachId, db } = await ctx();
+  const { session: me, coachId, db } = await ctx("diem-danh", "lich-trung-tam", "phan-cong");
   const id = str(f, "id");
   const patch: Record<string, unknown> = {};
+  const date = str(f, "date");
+  const time = str(f, "time");
+  // Dời buổi, đổi sân: chỉ người quản lý lịch. Đổi người dạy / trợ giảng (dạy thay): người phân công.
+  // Coach / trợ giảng chỉ hoàn tất buổi và ghi nội dung (database cũng chặn: guard_session_update).
+  const reschedule = f.has("venue_id") || (isDate(date) && isTime(time));
+  if (reschedule && !can(me, "lich-trung-tam")) throw new Error("Bạn không có quyền dời buổi học.");
+  if ((f.has("teacher_id") || f.has("assistant_id")) && !can(me, "phan-cong")) throw new Error("Bạn không có quyền phân công người dạy.");
   if (f.has("topic")) patch.topic = opt(f, "topic", 200);
   if (f.has("plan")) patch.plan = opt(f, "plan", 2000);
   if (f.has("venue_id")) patch.venue_id = opt(f, "venue_id");
-  const date = str(f, "date");
-  const time = str(f, "time");
+  if (f.has("teacher_id")) patch.teacher_id = opt(f, "teacher_id");
+  if (f.has("assistant_id")) patch.assistant_id = opt(f, "assistant_id");
   if (isDate(date) && isTime(time)) {
     const minutes = int(f, "minutes") ?? 90;
     patch.starts_at = vnIso(date, time);
@@ -173,7 +199,7 @@ export async function updateSession(f: FormData) {
 
 // ---------------------------------------------------------------- điểm danh + nhận xét
 export async function markAttendance(f: FormData) {
-  const { session, coachId, db } = await ctx();
+  const { session, coachId, db } = await ctx("diem-danh");
   const sessionId = str(f, "session_id");
   const studentId = str(f, "student_id");
   const status = str(f, "status") as AttendanceStatus | "";
@@ -190,7 +216,7 @@ export async function markAttendance(f: FormData) {
 }
 
 export async function saveFeedback(_p: FormState, f: FormData): Promise<FormState> {
-  const { session, coachId, db } = await ctx();
+  const { session, coachId, db } = await ctx("diem-danh");
   const sessionId = str(f, "session_id");
   const studentId = str(f, "student_id");
   const scores: Record<string, number> = {};
@@ -225,7 +251,7 @@ export async function saveFeedback(_p: FormState, f: FormData): Promise<FormStat
 
 // ---------------------------------------------------------------- học viên
 export async function createStudent(_p: FormState, f: FormData): Promise<FormState> {
-  const { coachId, db } = await ctx();
+  const { session: me, coachId, db } = await ctx("hoc-vien-sua");
   const name = str(f, "full_name", 80);
   if (name.length < 2) return { message: "Bạn điền họ tên học viên nhé." };
   const rawPhone = str(f, "phone");
@@ -252,13 +278,13 @@ export async function createStudent(_p: FormState, f: FormData): Promise<FormSta
     return { message: "Chưa lưu được học viên." };
   }
   const classId = opt(f, "class_id");
-  if (classId) await enrollInternal(db, coachId, classId, data.id);
+  if (classId) await enrollInternal(db, coachId, classId, data.id, opt(f, "closer_id") ?? me.userId);
   refresh();
   redirect(classId ? `/quan-ly/khoa-hoc/${classId}` : `/quan-ly/hoc-vien/${data.id}`);
 }
 
 type Db = Awaited<ReturnType<typeof serverClient>>;
-async function enrollInternal(db: Db, coachId: string, classId: string, studentId: string) {
+async function enrollInternal(db: Db, coachId: string, classId: string, studentId: string, closerId: string) {
   const { data: cls } = await db.from("classes").select("price, course_id").eq("id", classId).eq("coach_id", coachId).maybeSingle();
   if (!cls) return;
   let total: number | null = null;
@@ -272,29 +298,32 @@ async function enrollInternal(db: Db, coachId: string, classId: string, studentI
   }
   const { error } = await db
     .from("enrollments")
-    .upsert({ coach_id: coachId, class_id: classId, student_id: studentId, status: "dang-hoc", sessions_total: total, price: cls.price }, { onConflict: "class_id,student_id" });
+    .upsert(
+      { coach_id: coachId, class_id: classId, student_id: studentId, status: "dang-hoc", sessions_total: total, price: cls.price, closer_id: closerId },
+      { onConflict: "class_id,student_id" },
+    );
   if (error) throw error;
   await db.from("students").update({ status: "dang-hoc" }).eq("id", studentId).eq("coach_id", coachId);
 }
 
 export async function enrollStudent(f: FormData) {
-  const { coachId, db } = await ctx();
+  const { session: me, coachId, db } = await ctx("lop-sua");
   const classId = str(f, "class_id");
   const studentId = str(f, "student_id");
   if (!classId || !studentId) return;
-  await enrollInternal(db, coachId, classId, studentId);
+  await enrollInternal(db, coachId, classId, studentId, opt(f, "closer_id") ?? me.userId);
   refresh();
 }
 
 export async function unenroll(f: FormData) {
-  const { coachId, db } = await ctx();
+  const { coachId, db } = await ctx("lop-sua");
   const { error } = await db.from("enrollments").update({ status: "nghi" }).eq("id", str(f, "id")).eq("coach_id", coachId);
   if (error) throw error;
   refresh();
 }
 
 export async function updateStudent(_p: FormState, f: FormData): Promise<FormState> {
-  const { coachId, db } = await ctx();
+  const { coachId, db } = await ctx("hoc-vien-sua");
   const id = str(f, "id");
   const name = str(f, "full_name", 80);
   if (name.length < 2) return { message: "Họ tên chưa đúng." };
@@ -328,7 +357,7 @@ export async function updateStudent(_p: FormState, f: FormData): Promise<FormSta
 
 /** Tốt nghiệp khoá: DUPR cuối, nhận xét tổng kết, video tổng kết. */
 export async function graduate(_p: FormState, f: FormData): Promise<FormState> {
-  const { coachId, db } = await ctx();
+  const { coachId, db } = await ctx("hoc-vien-sua");
   const enrollmentId = str(f, "enrollment_id");
   const studentId = str(f, "student_id");
   const dupr = dec(f, "final_dupr");
@@ -354,7 +383,7 @@ export async function graduate(_p: FormState, f: FormData): Promise<FormState> {
 }
 
 export async function markBirthdayGift(f: FormData) {
-  const { coachId, db } = await ctx();
+  const { coachId, db } = await ctx("hoc-vien-sua");
   const year = Number(str(f, "year"));
   const { error } = await db.from("students").update({ birthday_gift_year: f.get("undo") ? null : year }).eq("id", str(f, "id")).eq("coach_id", coachId);
   if (error) throw error;
@@ -363,7 +392,7 @@ export async function markBirthdayGift(f: FormData) {
 
 // ---------------------------------------------------------------- giờ rảnh
 export async function addFreeSlot(_p: FormState, f: FormData): Promise<FormState> {
-  const { coachId, db } = await ctx();
+  const { coachId, db } = await ctx("lich-trung-tam");
   const weekday = Number(str(f, "weekday"));
   const start = str(f, "start_time");
   const end = str(f, "end_time");
@@ -378,7 +407,7 @@ export async function addFreeSlot(_p: FormState, f: FormData): Promise<FormState
 }
 
 export async function deleteFreeSlot(f: FormData) {
-  const { coachId, db } = await ctx();
+  const { coachId, db } = await ctx("lich-trung-tam");
   const { error } = await db.from("free_slots").delete().eq("id", str(f, "id")).eq("coach_id", coachId);
   if (error) throw error;
   refresh();
@@ -386,9 +415,11 @@ export async function deleteFreeSlot(f: FormData) {
 
 /** Chốt nhu cầu: tạo học viên + ghi danh lớp (nếu chọn). */
 export async function closeLead(f: FormData) {
-  const { db } = await ctx();
+  const { db } = await ctx("tuyen-sinh");
   const leadId = str(f, "id");
-  const { data, error } = await db.rpc("close_lead", { p_lead: leadId, p_class: opt(f, "class_id"), p_price: int(f, "price") });
+  const closer = opt(f, "closer_id");
+  if (!closer) throw new Error("Chọn người chốt trước khi chốt.");
+  const { data, error } = await db.rpc("close_lead", { p_lead: leadId, p_class: opt(f, "class_id"), p_price: int(f, "price"), p_closer: closer });
   if (error) throw error;
   refresh();
   redirect(`/quan-ly/hoc-vien/${data}`);

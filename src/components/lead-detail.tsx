@@ -4,7 +4,8 @@ import { LostReasonForm } from "@/components/lead-status";
 import { availabilityText, forWhomLabel, genderLabel } from "@/lib/labels";
 import { ageText, isOverdue, maskPhone } from "@/lib/leads";
 import { LEAD_ORIGINS, LEAD_STATUSES, ROLE_LABEL, type Lead, type LeadNote, type Member } from "@/lib/types";
-import { addLeadNote, assignLead, changeStatus } from "@/app/quan-ly/nhu-cau/actions";
+import { addLeadNote, assignLead, changeStatus, confirmPlacement } from "@/app/quan-ly/nhu-cau/actions";
+import { CloserSelect } from "@/components/closer-select";
 import { addSession, closeLead } from "@/app/quan-ly/_actions/teaching";
 import { ActionForm, Submit } from "@/components/action-form";
 import { vnDate } from "@/lib/time";
@@ -25,7 +26,7 @@ function Row({ label, value }: { label: string; value: React.ReactNode }) {
 
 type Choice = { id: string; label: string; price?: number | null };
 
-export function LeadDetail({ lead, notes, members, courseTitle, closeHref, classes, venues, studentId, offers }: { lead: Lead; notes: LeadNote[]; members: Member[]; courseTitle?: string; closeHref: string; classes: Choice[]; venues: Choice[]; studentId: string | null; offers: React.ReactNode }) {
+export function LeadDetail({ lead, notes, members, courseTitle, closeHref, classes, venues, studentId, offers, meId, canConfirm }: { lead: Lead; notes: LeadNote[]; members: Member[]; courseTitle?: string; closeHref: string; classes: Choice[]; venues: Choice[]; studentId: string | null; offers: React.ReactNode; meId: string; canConfirm: boolean }) {
   const status = LEAD_STATUSES.find((s) => s.value === lead.status)!;
   const overdue = isOverdue(lead);
   const memberName = (id: string | null) => {
@@ -102,7 +103,7 @@ export function LeadDetail({ lead, notes, members, courseTitle, closeHref, class
       <div>
         <h2 className="h2" style={{ fontSize: 15 }}>Chuyển trạng thái</h2>
         <div className="flex flex-wrap gap-1.5">
-          {LEAD_STATUSES.filter((s) => s.value !== "khong-thanh").map((s) => (
+          {LEAD_STATUSES.filter((s) => s.value !== "khong-thanh" && (s.value !== "da-chot" || lead.status === "da-chot")).map((s) => (
             <form key={s.value} action={changeStatus}>
               <input type="hidden" name="id" value={lead.id} />
               <input type="hidden" name="status" value={s.value} />
@@ -148,9 +149,10 @@ export function LeadDetail({ lead, notes, members, courseTitle, closeHref, class
               </div>
             </ActionForm>
 
-            <h2 className="h2 mt-5" style={{ fontSize: 15 }}>Chốt ngay (đã nhận tiền mặt)</h2>
+            <h2 className="h2 mt-5" style={{ fontSize: 15 }}>Chốt khoá</h2>
             <form action={closeLead} className="grid gap-2">
               <input type="hidden" name="id" value={lead.id} />
+              <CloserSelect members={members} defaultValue={meId} />
               <select name="class_id" className="input" style={{ height: 40 }} aria-label="Lớp" defaultValue="">
                 <option value="">Chưa xếp lớp (chỉ tạo học viên)</option>
                 {classes.map((c) => <option key={c.id} value={c.id}>{c.label}</option>)}
@@ -160,8 +162,35 @@ export function LeadDetail({ lead, notes, members, courseTitle, closeHref, class
                 <button className="btn primary">Chốt</button>
               </div>
             </form>
-            <p className="mt-1.5 text-xs text-faint">Tạo hồ sơ học viên và ghi danh vào lớp đã chọn. Tiền mặt thì ghi thêm ở Thu chi.</p>
+            <p className="mt-1.5 text-xs text-faint">
+              Bắt buộc chọn người chốt: người này là sale của học viên ở khoá này và nhận 10% mỗi buổi học viên học. Chốt xong, quản lý đào tạo được báo để xác nhận xếp lớp.
+              Thu tiền mặt thì ghi thêm ở Thu chi; chuyển khoản thì dùng Gửi offer ở trên.
+            </p>
           </>
+        )}
+        {lead.status === "da-chot" && (
+          <div className="soft mt-4 grid gap-2 text-[13px]">
+            <div>
+              Người chốt: <b>{memberName(lead.closer_id ?? null) ?? "chưa ghi"}</b>
+              {lead.closed_at && <span className="text-faint"> · {when(lead.closed_at)}</span>}
+            </div>
+            {lead.ops_confirmed_at ? (
+              <div className="font-semibold text-good">
+                ✓ Quản lý đã xác nhận{memberName(lead.ops_confirmed_by ?? null) ? ` (${memberName(lead.ops_confirmed_by ?? null)})` : ""} · {when(lead.ops_confirmed_at)}
+              </div>
+            ) : canConfirm ? (
+              <form action={confirmPlacement} className="grid gap-2">
+                <input type="hidden" name="id" value={lead.id} />
+                <select name="class_id" className="input" style={{ height: 40 }} aria-label="Xếp vào lớp" defaultValue="">
+                  <option value="">Giữ lớp đã chọn khi chốt</option>
+                  {classes.map((c) => <option key={c.id} value={c.id}>Xếp vào: {c.label}</option>)}
+                </select>
+                <button className="btn sm primary">Xác nhận đã nhận báo / đã xếp lớp</button>
+              </form>
+            ) : (
+              <div className="font-semibold text-warn">Đang chờ quản lý đào tạo xác nhận xếp lớp</div>
+            )}
+          </div>
         )}
         {studentId && (
           <Link href={`/quan-ly/hoc-vien/${studentId}`} className="btn sm navy mt-4">

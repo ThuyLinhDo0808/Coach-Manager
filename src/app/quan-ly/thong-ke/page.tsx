@@ -1,8 +1,7 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
 import { PageHead } from "@/components/admin-shell";
 import { getLeads, getMembers } from "@/lib/admin-data";
-import { requireSession } from "@/lib/auth";
+import { requirePerm } from "@/lib/auth";
 import { dong, monthRange, trieu } from "@/lib/money";
 import { moneyDb } from "@/lib/money-data";
 import { avgDuprGain, countBy, funnel, lastMonths, monthlyTotals, pct, retention } from "@/lib/stats";
@@ -16,8 +15,7 @@ const RANGES = [3, 6, 12];
 
 export default async function ThongKePage({ searchParams }: { searchParams: Promise<{ thang?: string }> }) {
   const sp = await searchParams;
-  const session = await requireSession();
-  if (session.role !== "owner") redirect("/quan-ly");
+  const session = await requirePerm("thong-ke");
   const n = RANGES.includes(Number(sp.thang)) ? Number(sp.thang) : 6;
   const thisMonth = vnDate().slice(0, 7);
   const months = lastMonths(thisMonth, n);

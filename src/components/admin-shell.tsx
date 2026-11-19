@@ -3,11 +3,10 @@ import { AdminMenu, AdminTabs, SubTabs } from "@/components/admin-nav";
 import { Avatar } from "@/components/avatar";
 import { Tile, type IconName } from "@/components/icon";
 import type { Session } from "@/lib/auth";
-import { allowedPerms } from "@/lib/permissions";
 
 export function AdminShell({ session, newLeads, children }: { session: Session; newLeads: number; children: React.ReactNode }) {
   const { coach } = session;
-  const perms = allowedPerms(session.role);
+  const perms = session.perms;
   return (
     <div className="app">
       <aside className="side">

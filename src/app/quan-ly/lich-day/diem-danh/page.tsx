@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { PageHead } from "@/components/admin-shell";
-import { requireSession } from "@/lib/auth";
+import { requirePerm } from "@/lib/auth";
 import { teachingDb } from "@/lib/teaching-data";
 import { addDays, dayLabel, nowMs, vnDate, vnIso, vnTime } from "@/lib/time";
 
@@ -8,7 +8,7 @@ export const metadata = { title: "Điểm danh" };
 
 // Các buổi cần điểm danh: hôm nay, 7 ngày tới và các buổi 14 ngày qua chưa hoàn tất.
 export default async function DiemDanhPage() {
-  const session = await requireSession();
+  const session = await requirePerm("diem-danh");
   const t = await teachingDb(session.coach.id);
   const today = vnDate();
   const [sessions, classes, venues, enrollments] = await Promise.all([

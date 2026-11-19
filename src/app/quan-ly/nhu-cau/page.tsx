@@ -5,7 +5,7 @@ import { LeadCard } from "@/components/lead-card";
 import { LeadDetail } from "@/components/lead-detail";
 import { NewLeadForm } from "@/components/new-lead-form";
 import { getAdminCourses, getLeadNotes, getLeads, getMembers } from "@/lib/admin-data";
-import { requireSession } from "@/lib/auth";
+import { requirePerm } from "@/lib/auth";
 import { headers } from "next/headers";
 import { LeadOffers } from "@/components/lead-offers";
 import { moneyDb } from "@/lib/money-data";
@@ -20,7 +20,7 @@ type Search = { id?: string; cot?: string; sale?: string; them?: string };
 
 export default async function NhuCauPage({ searchParams }: { searchParams: Promise<Search> }) {
   const sp = await searchParams;
-  const session = await requireSession();
+  const session = await requirePerm("tuyen-sinh");
   const [allLeads, members, courses] = await Promise.all([
     getLeads(session.coach.id),
     getMembers(session.coach.id),
@@ -129,12 +129,16 @@ export default async function NhuCauPage({ searchParams }: { searchParams: Promi
           courseTitle={courseTitle(selected.course_id)}
           closeHref={href({ id: undefined })}
           classes={openClasses}
+          meId={session.userId}
+          canConfirm={session.perms.includes("xac-nhan-xep-lop")}
           offers={
             <LeadOffers
               leadId={selected.id}
               offers={offers}
               classes={openClasses}
-              isOwner={session.role === "owner"}
+              isOwner={session.perms.includes("tai-chinh")}
+              members={members}
+              meId={session.userId}
               origin={origin}
               depositPct={getSettings(session.coach.settings).payout.deposit_pct}
               canClose={selected.status !== "da-chot"}

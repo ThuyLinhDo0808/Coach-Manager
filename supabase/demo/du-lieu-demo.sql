@@ -42,24 +42,24 @@ begin
   ) as t(n, name, phone, g, bd, st, ds, dc, ago);
 
   -- ------------------------------------------------------------ lớp
-  insert into public.classes (id, coach_id, course_id, title, kind, venue_id, schedule_text, start_date, max_students, price, is_recruiting, status, created_at)
+  insert into public.classes (id, coach_id, course_id, title, kind, venue_id, schedule_text, start_date, max_students, price, is_recruiting, status, created_at, main_coach_id)
   values
-    (pg_temp.did('cl1'), c, '00000000-0000-0000-0000-0000000000c1', 'Kèm 1-1 · Minh Tuấn', 'kem-1-1', v_a, 'T2, T4 06:00–08:00', d0 - 18, 1, 6000000, false, 'dang-dien-ra', now() - interval '20 days'),
-    (pg_temp.did('cl2'), c, '00000000-0000-0000-0000-0000000000c2', 'Nhóm 1:2 · Hà & Vy', 'lop', v_b, 'T3, T6 18:00–20:00', d0 - 17, 2, 7000000, false, 'dang-dien-ra', now() - interval '18 days'),
-    (pg_temp.did('cl3'), c, '00000000-0000-0000-0000-0000000000c4', 'Nhóm 1:4 · tối T3, T5', 'lop', v_a, 'T3, T5 19:00–21:00', d0 + 1, 4, 10000000, true, 'sap-dien-ra', now() - interval '7 days'),
-    (pg_temp.did('cl4'), c, '00000000-0000-0000-0000-0000000000c3', 'Nhóm 1:3 · tháng trước', 'lop', v_a, 'T7, CN 07:00–09:00', d0 - 70, 3, 8000000, false, 'da-ket-thuc', now() - interval '72 days');
+    (pg_temp.did('cl1'), c, '00000000-0000-0000-0000-0000000000c1', 'Kèm 1-1 · Minh Tuấn', 'kem-1-1', v_a, 'T2, T4 06:00–08:00', d0 - 18, 1, 6000000, false, 'dang-dien-ra', now() - interval '20 days', owner),
+    (pg_temp.did('cl2'), c, '00000000-0000-0000-0000-0000000000c2', 'Nhóm 1:2 · Hà & Vy', 'lop', v_b, 'T3, T6 18:00–20:00', d0 - 17, 2, 7000000, false, 'dang-dien-ra', now() - interval '18 days', owner),
+    (pg_temp.did('cl3'), c, '00000000-0000-0000-0000-0000000000c4', 'Nhóm 1:4 · tối T3, T5', 'lop', v_a, 'T3, T5 19:00–21:00', d0 + 1, 4, 10000000, true, 'sap-dien-ra', now() - interval '7 days', owner),
+    (pg_temp.did('cl4'), c, '00000000-0000-0000-0000-0000000000c3', 'Nhóm 1:3 · tháng trước', 'lop', v_a, 'T7, CN 07:00–09:00', d0 - 70, 3, 8000000, false, 'da-ket-thuc', now() - interval '72 days', owner);
 
   -- Học phí trong đăng ký là phần của từng học viên (học phí lớp chia đều).
-  insert into public.enrollments (id, coach_id, class_id, student_id, status, sessions_total, price, final_dupr, final_note, graduated_at, created_at)
+  insert into public.enrollments (id, coach_id, class_id, student_id, status, sessions_total, price, final_dupr, final_note, graduated_at, created_at, closer_id)
   values
-    (pg_temp.did('en1'), c, pg_temp.did('cl1'), pg_temp.did('st1'), 'dang-hoc', 10, 6000000, null, null, null, now() - interval '20 days'),
-    (pg_temp.did('en2'), c, pg_temp.did('cl2'), pg_temp.did('st2'), 'dang-hoc', 10, 3500000, null, null, null, now() - interval '18 days'),
-    (pg_temp.did('en3'), c, pg_temp.did('cl2'), pg_temp.did('st3'), 'dang-hoc', 10, 3500000, null, null, null, now() - interval '18 days'),
-    (pg_temp.did('en4'), c, pg_temp.did('cl3'), pg_temp.did('st4'), 'dang-hoc', 10, 2500000, null, null, null, now() - interval '6 days'),
-    (pg_temp.did('en5'), c, pg_temp.did('cl3'), pg_temp.did('st5'), 'dang-hoc', 10, 2500000, null, null, null, now() - interval '6 days'),
-    (pg_temp.did('en6'), c, pg_temp.did('cl4'), pg_temp.did('st6'), 'tot-nghiep', 10, 2670000, 3.3, 'Footwork tiến bộ rõ, third shot drop ổn định.', now() - interval '40 days', now() - interval '70 days'),
-    (pg_temp.did('en7'), c, pg_temp.did('cl4'), pg_temp.did('st7'), 'tot-nghiep', 10, 2670000, 3.0, 'Dink chắc tay, cần luyện thêm volley.', now() - interval '40 days', now() - interval '70 days'),
-    (pg_temp.did('en8'), c, pg_temp.did('cl4'), pg_temp.did('st8'), 'tot-nghiep', 10, 2660000, 3.4, 'Lên lưới tốt, nên học tiếp nâng cao.', now() - interval '40 days', now() - interval '70 days');
+    (pg_temp.did('en1'), c, pg_temp.did('cl1'), pg_temp.did('st1'), 'dang-hoc', 10, 6000000, null, null, null, now() - interval '20 days', owner),
+    (pg_temp.did('en2'), c, pg_temp.did('cl2'), pg_temp.did('st2'), 'dang-hoc', 10, 3500000, null, null, null, now() - interval '18 days', owner),
+    (pg_temp.did('en3'), c, pg_temp.did('cl2'), pg_temp.did('st3'), 'dang-hoc', 10, 3500000, null, null, null, now() - interval '18 days', owner),
+    (pg_temp.did('en4'), c, pg_temp.did('cl3'), pg_temp.did('st4'), 'dang-hoc', 10, 2500000, null, null, null, now() - interval '6 days', owner),
+    (pg_temp.did('en5'), c, pg_temp.did('cl3'), pg_temp.did('st5'), 'dang-hoc', 10, 2500000, null, null, null, now() - interval '6 days', owner),
+    (pg_temp.did('en6'), c, pg_temp.did('cl4'), pg_temp.did('st6'), 'tot-nghiep', 10, 2670000, 3.3, 'Footwork tiến bộ rõ, third shot drop ổn định.', now() - interval '40 days', now() - interval '70 days', owner),
+    (pg_temp.did('en7'), c, pg_temp.did('cl4'), pg_temp.did('st7'), 'tot-nghiep', 10, 2670000, 3.0, 'Dink chắc tay, cần luyện thêm volley.', now() - interval '40 days', now() - interval '70 days', owner),
+    (pg_temp.did('en8'), c, pg_temp.did('cl4'), pg_temp.did('st8'), 'tot-nghiep', 10, 2660000, 3.4, 'Lên lưới tốt, nên học tiếp nâng cao.', now() - interval '40 days', now() - interval '70 days', owner);
 
   -- ------------------------------------------------------------ buổi học (10 buổi mỗi lớp, theo thứ trong tuần)
   for r in
@@ -122,32 +122,32 @@ begin
   -- ------------------------------------------------------------ nhu cầu học
   insert into public.leads (id, coach_id, status, full_name, gender, birth_year, phone, for_whom, played_sports, sports,
     pickleball_duration, self_level, course_id, interests, goal, formats, styles, area, availability, budget, source,
-    origin, assigned_to, lost_reason, contacted_at, remind_on, created_at)
+    origin, assigned_to, lost_reason, contacted_at, remind_on, created_at, closer_id, ops_confirmed_at)
   values
     (pg_temp.did('ld1'), c, 'moi', 'Lê Quốc Bảo', 'nam', 1992, '0900000101', 'ban-than', true, array['Tennis'], 'Dưới 3 tháng', 'Mới cầm vợt',
       '00000000-0000-0000-0000-0000000000c1', array['Lớp 1:1'], 'Chơi được trận đôi với bạn bè', array['Kèm 1-1'], array['Nghiêm khắc'], 'Cầu Giấy',
-      '{"t3":["toi"],"t5":["toi"]}', '4–8 triệu', 'Facebook', 'form', null, null, null, null, now() - interval '30 hours'),
+      '{"t3":["toi"],"t5":["toi"]}', '4–8 triệu', 'Facebook', 'form', null, null, null, null, now() - interval '30 hours', null, null),
     (pg_temp.did('ld2'), c, 'moi', 'Phạm Ngọc Mai', 'nu', 1997, '0900000102', 'nhom', true, array['Cầu lông'], 'Chưa chơi', 'Mới cầm vợt',
       '00000000-0000-0000-0000-0000000000c3', array['Lớp 1:3'], 'Học cùng 2 bạn đồng nghiệp', array['Nhóm nhỏ 2–4 người'], array['Vui vẻ, thoải mái'], 'Đống Đa',
-      '{"t7":["sang"],"cn":["sang"]}', '2–4 triệu', 'TikTok', 'form', null, null, null, null, now() - interval '5 hours'),
+      '{"t7":["sang"],"cn":["sang"]}', '2–4 triệu', 'TikTok', 'form', null, null, null, null, now() - interval '5 hours', null, null),
     (pg_temp.did('ld3'), c, 'da-lien-he', 'Võ Thành Đạt', 'nam', 1985, '0900000103', 'ban-than', true, array['Tennis', 'Chạy bộ'], '3–12 tháng', 'Chơi được',
       '00000000-0000-0000-0000-0000000000c1', array['Lớp 1:1'], 'Sửa giao bóng, lên DUPR 3.5', array['Kèm 1-1'], array['Nghiêm khắc'], 'Tây Hồ',
-      '{"t2":["sang"],"t4":["sang"]}', 'Trên 8 triệu', 'Bạn giới thiệu', 'form', owner, null, now() - interval '2 days', d0 + 1, now() - interval '3 days'),
+      '{"t2":["sang"],"t4":["sang"]}', 'Trên 8 triệu', 'Bạn giới thiệu', 'form', owner, null, now() - interval '2 days', d0 + 1, now() - interval '3 days', null, null),
     (pg_temp.did('ld4'), c, 'hen-hoc-thu', 'Trịnh Minh Khoa', 'nam', 1995, '0900000104', 'ban-than', false, '{}', 'Chưa chơi', 'Mới cầm vợt',
       '00000000-0000-0000-0000-0000000000c4', array['Lớp 1:4'], 'Vận động sau giờ làm', array['Nhóm nhỏ 2–4 người'], '{}', 'Cầu Giấy',
-      '{"t3":["toi"],"t5":["toi"]}', '2–4 triệu', 'Facebook', 'form', owner, null, now() - interval '1 day', null, now() - interval '2 days'),
+      '{"t3":["toi"],"t5":["toi"]}', '2–4 triệu', 'Facebook', 'form', owner, null, now() - interval '1 day', null, now() - interval '2 days', null, null),
     (pg_temp.did('ld5'), c, 'cho-dong-tien', 'Hồ Bảo Ngọc', 'nu', 1999, '0900000105', 'ban-than', true, array['Bóng bàn'], 'Dưới 3 tháng', 'Chơi được',
       '00000000-0000-0000-0000-0000000000c4', array['Lớp 1:4'], 'Chơi chắc hơn ở lưới', array['Nhóm nhỏ 2–4 người'], '{}', 'Cầu Giấy',
-      '{"t3":["toi"],"t5":["toi"]}', '2–4 triệu', 'TikTok', 'form', owner, null, now() - interval '3 days', null, now() - interval '4 days'),
+      '{"t3":["toi"],"t5":["toi"]}', '2–4 triệu', 'TikTok', 'form', owner, null, now() - interval '3 days', null, now() - interval '4 days', null, null),
     (pg_temp.did('ld6'), c, 'da-chot', 'Nguyễn Minh Tuấn', 'nam', 1992, '0900000001', 'ban-than', true, array['Tennis'], '3–12 tháng', 'Chơi được',
       '00000000-0000-0000-0000-0000000000c1', array['Lớp 1:1'], 'Lên DUPR 3.5', array['Kèm 1-1'], '{}', 'Ba Đình',
-      '{"t2":["sang"],"t4":["sang"]}', '4–8 triệu', 'Facebook', 'form', owner, null, now() - interval '21 days', null, now() - interval '22 days'),
+      '{"t2":["sang"],"t4":["sang"]}', '4–8 triệu', 'Facebook', 'form', owner, null, now() - interval '21 days', null, now() - interval '22 days', owner, now() - interval '21 days'),
     (pg_temp.did('ld7'), c, 'khong-thanh', 'Đặng Hữu Phúc', 'nam', 1988, '0900000107', 'ban-than', true, array['Cầu lông'], 'Chưa chơi', 'Mới cầm vợt',
       '00000000-0000-0000-0000-0000000000c1', array['Lớp 1:1'], null, array['Kèm 1-1'], '{}', 'Long Biên',
-      '{"cn":["chieu"]}', 'Dưới 2 triệu', 'Facebook', 'form', owner, 'Giá', now() - interval '9 days', null, now() - interval '10 days'),
+      '{"cn":["chieu"]}', 'Dưới 2 triệu', 'Facebook', 'form', owner, 'Giá', now() - interval '9 days', null, now() - interval '10 days', null, null),
     (pg_temp.did('ld8'), c, 'danh-sach-cho', 'Lý Thu Trang', 'nu', 2001, '0900000108', 'nhom', false, '{}', 'Chưa chơi', 'Mới cầm vợt',
       '00000000-0000-0000-0000-0000000000c2', array['Lớp 1:2'], 'Học cùng em gái', array['Nhóm nhỏ 2–4 người'], '{}', 'Hai Bà Trưng',
-      '{"t7":["chieu"]}', '2–4 triệu', 'Bạn giới thiệu', 'zalo', owner, null, now() - interval '5 days', d0 + 7, now() - interval '6 days');
+      '{"t7":["chieu"]}', '2–4 triệu', 'Bạn giới thiệu', 'zalo', owner, null, now() - interval '5 days', d0 + 7, now() - interval '6 days', null, null);
 
   update public.students set lead_id = pg_temp.did('ld6') where id = pg_temp.did('st1');
 

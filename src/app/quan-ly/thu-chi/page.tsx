@@ -1,11 +1,10 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
 import { ActionForm, Submit } from "@/components/action-form";
 import { PageHead } from "@/components/admin-shell";
 import { Icon } from "@/components/icon";
 import { addLedgerEntry, cancelOffer, confirmOffer, deleteLedgerEntry } from "@/app/quan-ly/_actions/money";
 import { getLeads, getMembers } from "@/lib/admin-data";
-import { requireSession } from "@/lib/auth";
+import { requirePerm } from "@/lib/auth";
 import { studentDebts, categoryLabel, dong, isMonth, LEDGER_CATEGORIES, monthRange, profitByClass, shiftMonth, totals, trieu } from "@/lib/money";
 import { moneyDb } from "@/lib/money-data";
 import { teachingDb } from "@/lib/teaching-data";
@@ -26,8 +25,7 @@ function Amount({ kind, amount }: { kind: "thu" | "chi"; amount: number }) {
 
 export default async function ThuChiPage({ searchParams }: { searchParams: Promise<{ thang?: string; tab?: string; loc?: string; them?: string }> }) {
   const sp = await searchParams;
-  const session = await requireSession();
-  if (session.role !== "owner") redirect("/quan-ly");
+  const session = await requirePerm("tai-chinh");
   const month = isMonth(sp.thang) ? sp.thang : vnDate().slice(0, 7);
   const prev = shiftMonth(month, -1);
   const tab = TABS.some(([v]) => v === sp.tab) ? sp.tab! : "so";

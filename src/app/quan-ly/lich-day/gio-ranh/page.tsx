@@ -2,7 +2,7 @@ import { ActionForm, Submit } from "@/components/action-form";
 import { PageHead } from "@/components/admin-shell";
 import { Icon } from "@/components/icon";
 import { addFreeSlot, deleteFreeSlot } from "@/app/quan-ly/_actions/teaching";
-import { requireSession } from "@/lib/auth";
+import { requirePerm } from "@/lib/auth";
 import { teachingDb } from "@/lib/teaching-data";
 import { WEEKDAY_LONG } from "@/lib/time";
 
@@ -10,7 +10,7 @@ export const metadata = { title: "Lịch rảnh 1-1" };
 
 // Giờ rảnh lặp hằng tuần: hiện ở lưới "Còn trống" trang Lịch & sân để học viên đặt học 1-1 / học thử.
 export default async function GioRanhPage() {
-  const session = await requireSession();
+  const session = await requirePerm("lich-trung-tam");
   const t = await teachingDb(session.coach.id);
   const [slotsAll, venues] = await Promise.all([t.freeSlots(), t.venues()]);
   const venueName = (id: string | null) => venues.find((v) => v.id === id)?.name ?? null;

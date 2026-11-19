@@ -2,7 +2,7 @@ import { headers } from "next/headers";
 import Link from "next/link";
 import { PageHead } from "@/components/admin-shell";
 import { CopyButton } from "@/components/copy-button";
-import { requireSession } from "@/lib/auth";
+import { requirePerm } from "@/lib/auth";
 
 export const metadata = { title: "Form & trang công khai" };
 
@@ -16,7 +16,7 @@ const PAGES = [
 ];
 
 export default async function FormPage() {
-  await requireSession();
+  await requirePerm("tuyen-sinh");
   const h = await headers();
   const origin = `${h.get("x-forwarded-proto") ?? "https"}://${h.get("x-forwarded-host") ?? h.get("host") ?? ""}`;
   return (

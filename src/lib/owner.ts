@@ -7,7 +7,7 @@ import { serverClient } from "@/lib/supabase/server";
 /** Chỉ coach (owner) được vào Cài đặt và Nội dung. Sale / trợ giảng về Tổng quan. RLS vẫn chặn ở database. */
 export async function requireOwner(): Promise<Session> {
   const session = await requireSession();
-  if (session.role !== "owner") redirect("/quan-ly");
+  if (!session.roles.includes("chu")) redirect("/quan-ly?khong-du-quyen=1");
   return session;
 }
 

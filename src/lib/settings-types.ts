@@ -1,3 +1,4 @@
+import type { Role } from "./permissions";
 import type { Course, MemberRole } from "./types";
 
 /** Kết quả của server action lưu form: thông báo + lỗi theo tên trường. */
@@ -27,6 +28,7 @@ export const bankName = (bin: string) => BANKS.find((b) => b.bin === bin)?.name 
 export type MemberRow = {
   user_id: string;
   role: MemberRole;
+  roles: Role[];
   display_name: string | null;
   email: string | null;
   commission_pct: number;
@@ -39,6 +41,7 @@ export type InviteRow = {
   id: string;
   email: string;
   role: InviteRole;
+  roles: Role[];
   display_name: string | null;
   created_at: string;
 };

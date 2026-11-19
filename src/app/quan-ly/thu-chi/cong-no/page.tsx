@@ -1,7 +1,6 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
 import { PageHead } from "@/components/admin-shell";
-import { requireSession } from "@/lib/auth";
+import { requirePerm } from "@/lib/auth";
 import { dong, studentDebts } from "@/lib/money";
 import { moneyDb } from "@/lib/money-data";
 import { teachingDb } from "@/lib/teaching-data";
@@ -9,8 +8,7 @@ import { teachingDb } from "@/lib/teaching-data";
 export const metadata = { title: "Công nợ học viên" };
 
 export default async function CongNoPage() {
-  const session = await requireSession();
-  if (session.role !== "owner") redirect("/quan-ly");
+  const session = await requirePerm("tai-chinh");
   const t = await teachingDb(session.coach.id);
   const [students, enrollments, classes, ledger] = await Promise.all([t.students(), t.enrollments(), t.classes(), (await moneyDb(session.coach.id)).ledgerAllThu()]);
   const debts = studentDebts(students, enrollments, ledger);

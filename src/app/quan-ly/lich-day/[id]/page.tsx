@@ -5,9 +5,9 @@ import { Avatar } from "@/components/avatar";
 import { FeedbackForm } from "@/components/feedback-form";
 import { Icon } from "@/components/icon";
 import { markAttendance, updateSession } from "@/app/quan-ly/_actions/teaching";
-import { requireSession } from "@/lib/auth";
-import { sessionsLeft, type AttendanceStatus } from "@/lib/teaching";
-import { teachingDb } from "@/lib/teaching-data";
+import { requirePerm } from "@/lib/auth";
+import { type AttendanceStatus } from "@/lib/teaching";
+import { peopleOf, teachingDb, withRole } from "@/lib/teaching-data";
 import { dayLabel, vnDate, vnTime } from "@/lib/time";
 
 export const metadata = { title: "Buổi học" };
@@ -21,18 +21,22 @@ const ATT: { value: AttendanceStatus; label: string; color: string }[] = [
 export default async function BuoiHocPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ hv?: string; sua?: string; xong?: string }> }) {
   const { id } = await params;
   const sp = await searchParams;
-  const session = await requireSession();
+  const session = await requirePerm("diem-danh", "lich-trung-tam");
   const t = await teachingDb(session.coach.id);
   const s = await t.sessionById(id);
   if (!s) notFound();
   const [cls, venues, attendance, feedback, videos] = await Promise.all([
     s.class_id ? t.classById(s.class_id) : null, t.venues(), t.attendanceOfSession(id), t.feedbackOfSession(id), t.videos(),
   ]);
-  const enrollments = s.class_id ? (await t.enrollmentsOfClass(s.class_id)).filter((e) => e.status === "dang-hoc" || attendance.some((a) => a.student_id === e.student_id)) : [];
-  const students = await t.studentsByIds(enrollments.map((e) => e.student_id));
+  // Danh sách học viên qua hàm session_roster: chỉ tên + số buổi, không có SĐT / học phí / ghi chú (trợ giảng dùng được).
+  const roster = s.class_id ? await t.roster(id) : [];
+  const students = roster.map((r) => ({ id: r.student_id, full_name: r.full_name }));
   const classSessions = s.class_id ? await t.sessionsOfClass(s.class_id) : [];
-  const classSessionIds = new Set(classSessions.map((x) => x.id));
-  const allAttendance = s.class_id ? (await t.attendanceAll()).filter((a) => classSessionIds.has(a.session_id)) : [];
+  const people = peopleOf(await t.members());
+  const personName = (uid: string | null) => people.find((p) => p.id === uid)?.name ?? null;
+  const canAssign = session.perms.includes("phan-cong");
+  const canReschedule = session.perms.includes("lich-trung-tam");
+  const canSeeStudents = session.perms.includes("hoc-vien");
   const total = classSessions.filter((x) => x.status !== "huy").length;
   const venue = venues.find((v) => v.id === s.venue_id);
   const date = vnDate(s.starts_at);
@@ -57,10 +61,10 @@ export default async function BuoiHocPage({ params, searchParams }: { params: Pr
             <Icon name="map" size={16} /> Bản đồ
           </a>
         )}
-        <Link href={`/quan-ly/lich-day/${id}?sua=1#sua`} className="btn sm glass">Dời / sửa</Link>
+        {canReschedule && <Link href={`/quan-ly/lich-day/${id}?sua=1#sua`} className="btn sm glass">Dời / sửa</Link>}
       </PageHead>
 
-      {sp.sua && (
+      {sp.sua && canReschedule && (
         <form action={updateSession} id="sua" className="card mb-4 grid grid-cols-2 items-end gap-3 md:grid-cols-5">
           <input type="hidden" name="id" value={id} />
           <div className="field"><label htmlFor="u_date">Ngày</label><input id="u_date" name="date" type="date" required className="input" defaultValue={date} /></div>
@@ -89,8 +93,30 @@ export default async function BuoiHocPage({ params, searchParams }: { params: Pr
             <textarea name="plan" className="input" style={{ minHeight: 120 }} placeholder={"Mỗi dòng một việc, ví dụ:\nKhởi động bước chân 10 phút\nVolley chặn bóng thấp, 3 × 20 quả"} defaultValue={s.plan ?? ""} aria-label="Giáo án buổi" />
             <button className="btn sm ghost w-fit"><Icon name="pen" size={15} /> Lưu nội dung</button>
           </form>
+          <div className="divide-row mt-3 grid gap-1 pt-3 text-[13px]">
+            <div>
+              Người dạy: <b>{personName(s.teacher_id) ?? "chưa phân công"}</b>
+              {cls && s.teacher_id && cls.main_coach_id && s.teacher_id !== cls.main_coach_id && <span className="pill warn ml-1.5">Dạy thay {personName(cls.main_coach_id)}</span>}
+            </div>
+            <div>Trợ giảng: <b>{personName(s.assistant_id) ?? "không có"}</b></div>
+            {canAssign && (
+              <form action={updateSession} className="mt-1.5 grid grid-cols-[1fr_1fr_auto] gap-2">
+                <input type="hidden" name="id" value={id} />
+                <select name="teacher_id" className="input" style={{ height: 36, fontSize: 13 }} defaultValue={s.teacher_id ?? ""} aria-label="Người dạy buổi này">
+                  <option value="">Chưa phân công</option>
+                  {withRole(people, "coach", "chu").map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+                </select>
+                <select name="assistant_id" className="input" style={{ height: 36, fontSize: 13 }} defaultValue={s.assistant_id ?? ""} aria-label="Trợ giảng buổi này">
+                  <option value="">Không trợ giảng</option>
+                  {withRole(people, "tro-giang").map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+                </select>
+                <button className="btn sm ghost">Đổi</button>
+              </form>
+            )}
+            <p className="text-xs text-faint">Tiền dạy của buổi tính cho người dạy thực tế (kể cả dạy thay).</p>
+          </div>
           <div className="divide-row mt-3 flex flex-wrap gap-2 pt-3">
-            {s.status !== "huy" ? (
+            {!canReschedule ? null : s.status !== "huy" ? (
               <form action={updateSession}>
                 <input type="hidden" name="id" value={id} />
                 <input type="hidden" name="status" value="huy" />
@@ -127,13 +153,13 @@ export default async function BuoiHocPage({ params, searchParams }: { params: Pr
             </div>
           )}
           {students.map((st) => {
-            const e = enrollments.find((x) => x.student_id === st.id);
-            const left = sessionsLeft(e?.sessions_total ?? null, allAttendance.filter((a) => a.student_id === st.id));
+            const r = roster.find((x) => x.student_id === st.id);
+            const left = r?.sessions_total != null ? Math.max(r.sessions_total - r.used, 0) : null;
             const cur = attOf(st.id);
             return (
               <div key={st.id} className="divide-row flex flex-wrap items-center gap-2.5 py-3">
                 <Avatar name={st.full_name} soft />
-                <Link href={`/quan-ly/hoc-vien/${st.id}`} className="min-w-[120px] flex-1">
+                <Link href={canSeeStudents ? `/quan-ly/hoc-vien/${st.id}` : "#"} className="min-w-[120px] flex-1">
                   <b>{st.full_name}</b>
                   <div className="text-[13px] text-faint">{left != null ? `Còn ${left} buổi` : "Trả theo buổi"}</div>
                 </Link>

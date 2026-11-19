@@ -4,19 +4,22 @@ import { PageHead } from "@/components/admin-shell";
 import { Avatar } from "@/components/avatar";
 import { Icon } from "@/components/icon";
 import { createStudent } from "@/app/quan-ly/_actions/teaching";
-import { requireSession } from "@/lib/auth";
+import { requirePerm } from "@/lib/auth";
 import { GENDERS } from "@/lib/labels";
 import { sessionsLeft, STUDENT_STATUSES, type StudentStatus } from "@/lib/teaching";
+import { CloserSelect } from "@/components/closer-select";
 import { teachingDb } from "@/lib/teaching-data";
+import type { Member } from "@/lib/types";
 import { dmy, vnDate } from "@/lib/time";
 
 export const metadata = { title: "Học viên" };
 
 export default async function HocVienPage({ searchParams }: { searchParams: Promise<{ tt?: string; them?: string; q?: string }> }) {
   const sp = await searchParams;
-  const session = await requireSession();
+  const session = await requirePerm("hoc-vien");
   const t = await teachingDb(session.coach.id);
-  const [students, enrollments, classes, attendance] = await Promise.all([t.students(), t.enrollments(), t.classes(), t.attendanceAll()]);
+  const [students, enrollments, classes, attendance, members] = await Promise.all([t.students(), t.enrollments(), t.classes(), t.attendanceAll(), t.members()]);
+  const canEdit = session.perms.includes("hoc-vien-sua");
   const sessions = await t.sessionsOfClasses(classes.map((c) => c.id));
   const tab = (STUDENT_STATUSES.some((s) => s.value === sp.tt) ? sp.tt : "dang-hoc") as StudentStatus;
   const q = (sp.q ?? "").trim().toLowerCase();
@@ -45,12 +48,14 @@ export default async function HocVienPage({ searchParams }: { searchParams: Prom
   return (
     <>
       <PageHead icon="users" color="violet" title="Học viên" sub={`${students.filter((s) => s.status === "dang-hoc").length} đang học · ${students.length} tất cả`}>
-        <Link href="/quan-ly/hoc-vien?them=1" className="btn primary">
-          <Icon name="plus" /> Thêm học viên
-        </Link>
+        {canEdit && (
+          <Link href="/quan-ly/hoc-vien?them=1" className="btn primary">
+            <Icon name="plus" /> Thêm học viên
+          </Link>
+        )}
       </PageHead>
 
-      {sp.them && (
+      {sp.them && canEdit && (
         <ActionForm action={createStudent} className="card mb-4 grid gap-3.5">
           <h2 className="h2 mb-0">Thêm học viên</h2>
           <div className="grid gap-3.5 md:grid-cols-3">
@@ -71,6 +76,10 @@ export default async function HocVienPage({ searchParams }: { searchParams: Prom
                 <option value="">Chưa xếp lớp</option>
                 {classes.filter((c) => c.status === "dang-dien-ra" || c.status === "sap-dien-ra").map((c) => <option key={c.id} value={c.id}>{c.title}</option>)}
               </select>
+            </div>
+            <div className="field">
+              <label htmlFor="n_closer">Người chốt (khi vào lớp)</label>
+              <CloserSelect members={members.map((m) => ({ ...m, role: m.role as Member["role"], roles: m.roles ?? undefined }))} defaultValue={session.userId} />
             </div>
           </div>
           <div className="flex justify-end gap-2">

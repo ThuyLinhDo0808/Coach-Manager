@@ -4,30 +4,17 @@ import Link from "next/link";
 import { useState } from "react";
 import { inviteMember, removeMember, saveMember, savePermissions } from "@/app/quan-ly/cai-dat/actions";
 import { ConfirmButton, CopyButton, SaveBar, useSave } from "@/components/form-kit";
-import { Field, Notice, RadioCard, SegPick, Switch, UnitInput } from "@/components/ui-kit";
-import { PERMISSIONS, type LeadAssignSettings, type PermissionsSettings } from "@/lib/settings";
-import type { InviteRole, MemberRow } from "@/lib/settings-types";
-import { ROLE_LABEL, type MemberRole } from "@/lib/types";
+import { RolePicker } from "@/components/settings/role-picker";
+import { Field, Notice, RadioCard, Switch } from "@/components/ui-kit";
+import { ROLES, permsFor, type Role } from "@/lib/permissions";
+import type { LeadAssignSettings, PermissionsSettings } from "@/lib/settings";
+import type { MemberRow } from "@/lib/settings-types";
+import { ROLE_LABEL } from "@/lib/types";
 
 const BASE = "/quan-ly/cai-dat/thanh-vien";
-const ROLES: { value: MemberRole; label: string }[] = [
-  { value: "owner", label: "Coach" },
-  { value: "sale", label: "Sale" },
-  { value: "tro-giang", label: "Trợ giảng" },
-];
-const INVITE_ROLES: { value: InviteRole; label: string }[] = [
-  { value: "sale", label: "Sale" },
-  { value: "tro-giang", label: "Trợ giảng" },
-];
 
 export function MemberForm({ member, isSelf }: { member: MemberRow; isSelf: boolean }) {
-  const [v, setV] = useState({
-    user_id: member.user_id,
-    display_name: member.display_name ?? "",
-    role: member.role,
-    commission_pct: String(member.commission_pct),
-    wage_per_session: String(member.wage_per_session),
-  });
+  const [v, setV] = useState({ user_id: member.user_id, display_name: member.display_name ?? "", roles: member.roles });
   const save = useSave(saveMember, v);
   const name = member.display_name ?? member.email ?? ROLE_LABEL[member.role];
   return (
@@ -40,25 +27,12 @@ export function MemberForm({ member, isSelf }: { member: MemberRow; isSelf: bool
           <Field label="Tên hiển thị" error={save.err("display_name")}>
             <input className="input" maxLength={60} value={v.display_name} onChange={(e) => setV({ ...v, display_name: e.target.value })} />
           </Field>
-          <div className="field">
-            <span className="label">Vai trò</span>
-            {isSelf ? (
-              <span className="input flex items-center bg-page text-muted">{ROLE_LABEL[member.role]} · không tự đổi vai trò của mình</span>
-            ) : (
-              <SegPick label="Vai trò" options={ROLES} value={v.role} onChange={(r) => setV({ ...v, role: r })} full />
-            )}
-            {save.err("role") && <span className="err">{save.err("role")}</span>}
+          <div className="field md:col-span-2">
+            <span className="label">Vai trò (chọn nhiều)</span>
+            <RolePicker value={v.roles} onChange={(roles) => setV({ ...v, roles })} locked={isSelf ? ["chu"] : []} />
+            {isSelf && <span className="text-xs text-faint">Bạn không tự bỏ vai trò Coach chủ của mình.</span>}
+            {save.err("roles") && <span className="err">{save.err("roles")}</span>}
           </div>
-          {v.role === "sale" && (
-            <Field label="Hoa hồng mỗi khoá chốt" error={save.err("commission_pct")}>
-              <UnitInput unit="%" inputMode="decimal" maxLength={5} value={v.commission_pct} onChange={(e) => setV({ ...v, commission_pct: e.target.value })} />
-            </Field>
-          )}
-          {v.role === "tro-giang" && (
-            <Field label="Lương mỗi buổi dạy" error={save.err("wage_per_session")}>
-              <UnitInput unit="đ" inputMode="numeric" maxLength={11} value={v.wage_per_session} onChange={(e) => setV({ ...v, wage_per_session: e.target.value })} />
-            </Field>
-          )}
         </div>
         <div className="mt-3.5">
           <SaveBar save={save}>
@@ -80,7 +54,7 @@ export function MemberForm({ member, isSelf }: { member: MemberRow; isSelf: bool
 }
 
 export function InviteForm() {
-  const [v, setV] = useState({ email: "", role: "sale" as InviteRole, display_name: "" });
+  const [v, setV] = useState({ email: "", roles: ["sale"] as Role[], display_name: "" });
   const save = useSave(inviteMember, v);
   return (
     <div className="card" id="moi">
@@ -93,10 +67,10 @@ export function InviteForm() {
           <Field label="Tên hiển thị" error={save.err("display_name")}>
             <input className="input" maxLength={60} placeholder="Ví dụ: Hạnh" value={v.display_name} onChange={(e) => setV({ ...v, display_name: e.target.value })} />
           </Field>
-          <div className="field">
-            <span className="label">Vai trò</span>
-            <SegPick label="Vai trò" options={INVITE_ROLES} value={v.role} onChange={(r) => setV({ ...v, role: r })} full />
-            {save.err("role") && <span className="err">{save.err("role")}</span>}
+          <div className="field md:col-span-3">
+            <span className="label">Vai trò (chọn nhiều)</span>
+            <RolePicker value={v.roles} onChange={(roles) => setV({ ...v, roles })} exclude={["chu"]} />
+            {save.err("roles") && <span className="err">{save.err("roles")}</span>}
           </div>
         </div>
         <div className="mt-3.5">
@@ -112,59 +86,76 @@ export function InviteForm() {
   );
 }
 
+const PERM_ROWS: { label: string; perms: string[] }[] = [
+  { label: "Tổng quan hôm nay", perms: ["tong-quan"] },
+  { label: "Cần xử lý (đăng ký chờ duyệt, buổi chưa điểm danh…)", perms: ["can-xu-ly"] },
+  { label: "Lịch của tôi, điểm danh buổi mình dạy", perms: ["lich-cua-toi"] },
+  { label: "Lịch trung tâm, lịch rảnh 1-1", perms: ["lich-trung-tam"] },
+  { label: "Học viên (coach: chỉ lớp mình)", perms: ["hoc-vien"] },
+  { label: "Lớp (coach: chỉ lớp mình); sửa lớp", perms: ["lop", "lop-sua"] },
+  { label: "Tuyển sinh: nhu cầu, học thử, chốt khoá", perms: ["tuyen-sinh"] },
+  { label: "Xác nhận đã xếp lớp sau khi chốt", perms: ["xac-nhan-xep-lop"] },
+  { label: "Phân công lớp (dạy chính, dạy thay)", perms: ["phan-cong"] },
+  { label: "Sổ thu chi, công nợ, chia tiền, chi trả", perms: ["tai-chinh"] },
+  { label: "Các quỹ, báo cáo lãi / lỗ (xem)", perms: ["quy-xem", "bao-cao"] },
+  { label: "Thu nhập / tiền của tôi", perms: ["thu-nhap"] },
+  { label: "Phần của tôi (cổ đông)", perms: ["phan-cua-toi"] },
+  { label: "Gói buổi, giáo án, đánh giá, thống kê, đội ngũ", perms: ["goi-buoi", "giao-an", "thong-ke", "doi-ngu"] },
+  { label: "Cài đặt, tỉ lệ chia & cổ đông, chốt tháng", perms: ["cai-dat", "ti-le"] },
+];
+
 export function PermissionsForm({ permissions, leadAssign }: { permissions: PermissionsSettings; leadAssign: LeadAssignSettings }) {
   const [v, setV] = useState({ permissions, lead_assign: leadAssign });
   const save = useSave(savePermissions, v);
-  const toggle = (key: keyof PermissionsSettings, role: "sale" | "tro-giang", on: boolean) =>
-    setV((p) => ({ ...p, permissions: { ...p.permissions, [key]: { ...p.permissions[key], [role]: on } } }));
   const assign = (patch: Partial<LeadAssignSettings>) => setV((p) => ({ ...p, lead_assign: { ...p.lead_assign, ...patch } }));
+  const has = (role: Role, perms: string[]) => perms.some((p) => (permsFor([role]) as string[]).includes(p));
   return (
     <form onSubmit={save.onSubmit} className="grid gap-4" noValidate>
-      <div className="grid items-start gap-4 md:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">
-        <div className="card min-w-0">
-          <h2 className="h2">Quyền theo vai trò</h2>
-          <table className="tbl">
+      <div className="card min-w-0">
+        <h2 className="h2">Quyền theo vai trò</h2>
+        <div className="overflow-x-auto">
+          <table className="tbl" style={{ minWidth: 640 }}>
             <thead>
               <tr>
                 <th style={{ paddingLeft: 0 }}>Việc được làm</th>
-                <th style={{ textAlign: "center" }}>Sale</th>
-                <th style={{ textAlign: "center" }}>Trợ giảng</th>
+                {ROLES.map((r) => (
+                  <th key={r.value} style={{ textAlign: "center" }}>{r.label}</th>
+                ))}
               </tr>
             </thead>
             <tbody>
-              {PERMISSIONS.map((p) => (
-                <tr key={p.key}>
-                  <td className="font-medium" style={{ paddingLeft: 0 }}>{p.label}</td>
-                  <td style={{ textAlign: "center" }}>
-                    <Switch checked={v.permissions[p.key].sale} onChange={(on) => toggle(p.key, "sale", on)} label={`Sale: ${p.label}`} />
-                  </td>
-                  <td style={{ textAlign: "center" }}>
-                    <Switch checked={v.permissions[p.key]["tro-giang"]} onChange={(on) => toggle(p.key, "tro-giang", on)} label={`Trợ giảng: ${p.label}`} />
-                  </td>
+              {PERM_ROWS.map((row) => (
+                <tr key={row.label}>
+                  <td className="font-medium" style={{ paddingLeft: 0 }}>{row.label}</td>
+                  {ROLES.map((r) => (
+                    <td key={r.value} style={{ textAlign: "center" }} aria-label={`${r.label}: ${has(r.value, row.perms) ? "có" : "không"}`}>
+                      {has(r.value, row.perms) ? <span className="text-good">●</span> : <span className="text-[#d2d2d7]">·</span>}
+                    </td>
+                  ))}
                 </tr>
               ))}
             </tbody>
           </table>
-          <div className="mt-2.5 grid gap-2">
-            <Notice>Công tắc ở bảng này hiện mới là ghi nhận. Phần chặn theo quyền sẽ áp dụng dần; lúc này sale và trợ giảng vẫn dùng được các mục đang mở cho thành viên.</Notice>
-            <div className="text-xs text-faint">Coach luôn có mọi quyền. Cài đặt và Nội dung chỉ coach vào được.</div>
-          </div>
         </div>
-
-        <div className="card min-w-0">
-          <h2 className="h2">Chia nhu cầu cho sale</h2>
-          <div className="grid gap-2">
-            <RadioCard name="lead_assign" checked={v.lead_assign.mode === "xoay-vong"} onChange={() => assign({ mode: "xoay-vong" })} title="Xoay vòng tự động" sub="Mỗi nhu cầu mới giao lần lượt cho từng sale" />
-            <RadioCard name="lead_assign" checked={v.lead_assign.mode === "coach-giao"} onChange={() => assign({ mode: "coach-giao" })} title="Coach tự giao" sub="Nhu cầu vào cột Mới, chưa giao ai" />
-            <div className="flex items-center justify-between gap-2.5 px-0.5 py-2">
-              <span className="font-medium">Báo khi nhu cầu quá 24 giờ chưa gọi</span>
-              <Switch checked={v.lead_assign.alert_24h} onChange={(on) => assign({ alert_24h: on })} label="Báo khi nhu cầu quá 24 giờ chưa gọi" />
-            </div>
-            <Notice>Hiện mới lưu lựa chọn. Nhu cầu mới vẫn vào cột Mới và coach giao tay; xoay vòng tự động chưa chạy.</Notice>
-          </div>
+        <div className="mt-2.5 text-xs text-faint">
+          Một người có nhiều vai trò thì có quyền của tất cả vai trò đó. Quyền được kiểm tra ở cả trang, thao tác và database.
+          Trợ giảng không thấy học phí, số điện thoại và ghi chú của học viên.
         </div>
       </div>
-      <SaveBar save={save} label="Lưu quyền và cách chia" />
+
+      <div className="card min-w-0">
+        <h2 className="h2">Chia nhu cầu cho sale</h2>
+        <div className="grid gap-2 md:grid-cols-2">
+          <RadioCard name="lead_assign" checked={v.lead_assign.mode === "xoay-vong"} onChange={() => assign({ mode: "xoay-vong" })} title="Xoay vòng tự động" sub="Mỗi nhu cầu mới giao lần lượt cho từng sale" />
+          <RadioCard name="lead_assign" checked={v.lead_assign.mode === "coach-giao"} onChange={() => assign({ mode: "coach-giao" })} title="Tự giao" sub="Nhu cầu vào cột Mới, chưa giao ai" />
+        </div>
+        <div className="flex items-center justify-between gap-2.5 px-0.5 py-2">
+          <span className="font-medium">Báo khi nhu cầu quá 24 giờ chưa gọi</span>
+          <Switch checked={v.lead_assign.alert_24h} onChange={(on) => assign({ alert_24h: on })} label="Báo khi nhu cầu quá 24 giờ chưa gọi" />
+        </div>
+        <Notice>Hiện mới lưu lựa chọn. Nhu cầu mới vẫn vào cột Mới; xoay vòng tự động chưa chạy. Ai chốt được thì người đó là sale của học viên.</Notice>
+      </div>
+      <SaveBar save={save} label="Lưu cách chia nhu cầu" />
     </form>
   );
 }

@@ -2,18 +2,20 @@ import Link from "next/link";
 import { PageHead } from "@/components/admin-shell";
 import { ClassForm } from "@/components/class-form";
 import { Icon } from "@/components/icon";
-import { requireSession } from "@/lib/auth";
+import { requirePerm } from "@/lib/auth";
 import { formatVnd } from "@/lib/format";
 import { CLASS_STATUSES, type ClassStatus } from "@/lib/teaching";
-import { teachingDb } from "@/lib/teaching-data";
+import { peopleOf, teachingDb, withRole } from "@/lib/teaching-data";
 
 export const metadata = { title: "Lớp" };
 
 export default async function KhoaHocLopPage({ searchParams }: { searchParams: Promise<{ tt?: string; them?: string }> }) {
   const sp = await searchParams;
-  const session = await requireSession();
+  const session = await requirePerm("lop");
   const t = await teachingDb(session.coach.id);
-  const [classes, venues, courses, enrollments] = await Promise.all([t.classes(), t.venues(), t.courses(), t.enrollments()]);
+  const [classes, venues, courses, enrollments, members] = await Promise.all([t.classes(), t.venues(), t.courses(), t.enrollments(), t.members()]);
+  const people = peopleOf(members);
+  const canEdit = session.perms.includes("lop-sua");
   const sessions = await t.sessionsOfClasses(classes.map((c) => c.id));
   const tab = (CLASS_STATUSES.some((s) => s.value === sp.tt) ? sp.tt : "dang-dien-ra") as ClassStatus | "tuyen";
   const isRecruitTab = sp.tt === "tuyen";
@@ -30,12 +32,22 @@ export default async function KhoaHocLopPage({ searchParams }: { searchParams: P
   return (
     <>
       <PageHead icon="book" color="indigo" title="Lớp" sub={`${count("dang-dien-ra")} lớp đang diễn ra · ${count("sap-dien-ra")} sắp diễn ra`}>
-        <Link href="/quan-ly/khoa-hoc?them=1" className="btn primary">
-          <Icon name="plus" /> Tạo lịch học
-        </Link>
+        {canEdit && (
+          <Link href="/quan-ly/khoa-hoc?them=1" className="btn primary">
+            <Icon name="plus" /> Tạo lịch học
+          </Link>
+        )}
       </PageHead>
 
-      {sp.them && <ClassForm courses={courses} venues={venues.map((v) => ({ id: v.id, name: v.name }))} />}
+      {sp.them && canEdit && (
+        <ClassForm
+          courses={courses}
+          venues={venues.map((v) => ({ id: v.id, name: v.name }))}
+          coaches={withRole(people, "coach", "chu")}
+          assistants={withRole(people, "tro-giang")}
+          meId={session.userId}
+        />
+      )}
 
       <div className="seg mb-3.5">
         {tabs.map(([v, l, n]) => (
@@ -61,7 +73,7 @@ export default async function KhoaHocLopPage({ searchParams }: { searchParams: P
                 <div className="min-w-[180px] flex-1">
                   <b>{c.title}</b>
                   <div className="text-[13px] text-faint">
-                    {[courses.find((x) => x.id === c.course_id)?.title, venue, c.schedule_text].filter(Boolean).join(" · ") || "Chưa có lịch"}
+                    {[courses.find((x) => x.id === c.course_id)?.title, people.find((p) => p.id === c.main_coach_id)?.name, venue, c.schedule_text].filter(Boolean).join(" · ") || "Chưa có lịch"}
                   </div>
                 </div>
                 {c.is_recruiting && <span className="pill good">Đang tuyển</span>}

@@ -37,7 +37,8 @@ Chạy theo thứ tự, mỗi file một lần. Nếu Supabase hiện cảnh bá
 7. `supabase/migrations/20261120000000_settings_content.sql` — mời thành viên, mẫu tin nhắn, cột sân
 8. `supabase/migrations/20261121000000_course_kind_nhom.sql` — thêm loại khoá "Nhóm nhỏ"
 9. `supabase/migrations/20261122000000_stats_as_text.sql` — số liệu nổi bật của coach là chữ tự do
-10. `supabase/seed.sql` — nội dung mẫu (chạy lại nhiều lần cũng không sao). Sinh lại bằng `npm run seed:gen`.
+10. `supabase/migrations/20261123000000_roles_team.sql` — nhiều vai trò, người dạy / dạy thay, người chốt, quản lý xác nhận xếp lớp, quyền theo vai trò
+11. `supabase/seed.sql` — nội dung mẫu (chạy lại nhiều lần cũng không sao). Sinh lại bằng `npm run seed:gen`.
 
 ### Dữ liệu demo (tuỳ chọn)
 
@@ -85,3 +86,9 @@ Giao diện bám bộ mẫu 20 màn (đặc tả mục 4 và 5).
 ## Menu khu quản lý
 
 Menu trái chia 3 nhóm: **Hằng ngày** (Tổng quan, Lịch, Học viên, Lớp & khoá học), **Kinh doanh** (Tuyển sinh, Tài chính, Thống kê), **Trung tâm** (Đội ngũ, Cài đặt). Bấm một mục để mở các mục con; trên điện thoại, mục con là dải tab ngang đầu trang. Khai báo menu ở `src/lib/menu.ts`; mục con chưa có trang hiện "Sắp có".
+
+## Vai trò và quyền
+
+Một người có thể có nhiều vai trò (Cài đặt › Phân quyền): **Coach chủ**, **Quản lý đào tạo**, **Cổ đông**, **Coach**, **Sale**, **Trợ giảng**. Quyền của từng vai trò khai báo ở `src/lib/permissions.ts`; menu, từng trang và từng server action kiểm tra bằng `requirePerm()`, còn database chặn bằng RLS (`has_any_role`, `works_in_session`…). Trợ giảng không đọc trực tiếp bảng học viên / lớp; danh sách học viên của buổi lấy qua hàm `session_roster()` (không có số điện thoại, học phí, ghi chú).
+
+Tuyển sinh: chỉ chuyển sang **Đã chốt** qua nút Chốt / xác nhận tiền offer, bắt buộc chọn **người chốt** (database cũng chặn). Người chốt được lưu theo từng đăng ký học viên × lớp. Sau khi chốt, nhu cầu nằm ở Cần xử lý của quản lý đào tạo cho tới khi bấm "Xác nhận đã xếp lớp".
