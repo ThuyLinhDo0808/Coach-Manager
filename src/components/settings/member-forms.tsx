@@ -30,7 +30,7 @@ export function MemberForm({ member, isSelf }: { member: MemberRow; isSelf: bool
           <div className="field md:col-span-2">
             <span className="label">Vai trò (chọn nhiều)</span>
             <RolePicker value={v.roles} onChange={(roles) => setV({ ...v, roles })} locked={isSelf ? ["chu"] : []} />
-            {isSelf && <span className="text-xs text-faint">Bạn không tự bỏ vai trò Coach chủ của mình.</span>}
+            {isSelf && <span className="text-xs text-faint">Bạn không tự bỏ vai trò Team Leader của mình.</span>}
             {save.err("roles") && <span className="err">{save.err("roles")}</span>}
           </div>
         </div>

@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { contactLinks } from "@/components/contact-links";
 import { Icon } from "@/components/icon";
+import { RichText } from "@/components/rich-text";
 import { getCoach } from "@/lib/data";
 
 export const revalidate = 60;
@@ -16,9 +17,20 @@ export default async function GioiThieuPage() {
       {coach.bio && (
         <section className="card">
           <h2 className="h2">Đôi lời giới thiệu</h2>
-          <div className="grid gap-2.5 text-[15px] text-muted">
-            {coach.bio.split(/\n{2,}/).map((p, i) => (
-              <p key={i}>{p}</p>
+          <RichText text={coach.bio} />
+        </section>
+      )}
+
+      {(coach.gallery?.length ?? 0) > 0 && (
+        <section className="card">
+          <h2 className="h2">Hình ảnh</h2>
+          <div className="gallery">
+            {coach.gallery!.map((g, i) => (
+              <a key={g.url} href={g.url} target="_blank" rel="noopener noreferrer" className={i === 0 && coach.gallery!.length % 2 === 1 ? "wide" : ""}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={g.url} alt={g.caption || `Ảnh ${i + 1}`} loading="lazy" />
+                {g.caption && <span>{g.caption}</span>}
+              </a>
             ))}
           </div>
         </section>

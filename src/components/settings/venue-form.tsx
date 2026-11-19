@@ -4,12 +4,12 @@ import Link from "next/link";
 import { useState } from "react";
 import { deleteVenue, saveVenue } from "@/app/quan-ly/cai-dat/actions";
 import { ConfirmButton, SaveBar, useSave } from "@/components/form-kit";
-import { Field, Switch, UnitInput } from "@/components/ui-kit";
+import { PriceTable } from "@/components/settings/price-table";
+import { Field, Switch } from "@/components/ui-kit";
 import type { VenueAdmin } from "@/lib/settings-types";
+import type { PriceRule } from "@/lib/venue-price";
 
-const str = (n: number | null) => (n == null ? "" : String(n));
-
-export function VenueForm({ venue, nextSort }: { venue: VenueAdmin | null; nextSort: number }) {
+export function VenueForm({ venue }: { venue: VenueAdmin | null }) {
   const [v, setV] = useState({
     id: venue?.id ?? "",
     name: venue?.name ?? "",
@@ -17,14 +17,11 @@ export function VenueForm({ venue, nextSort }: { venue: VenueAdmin | null; nextS
     address: venue?.address ?? "",
     maps_url: venue?.maps_url ?? "",
     image_url: venue?.image_url ?? "",
-    hours_text: venue?.hours_text ?? "",
-    court_count: str(venue?.court_count ?? null),
-    rent_per_hour: str(venue?.rent_per_hour ?? null),
+    price_rules: venue?.price_rules ?? ([] as PriceRule[]),
     is_public: venue?.is_public ?? true,
-    sort: String(venue?.sort ?? nextSort),
   });
   const save = useSave(saveVenue, v);
-  const txt = (k: Exclude<keyof typeof v, "is_public">) => ({
+  const txt = (k: Exclude<keyof typeof v, "is_public" | "price_rules">) => ({
     value: v[k],
     onChange: (e: React.ChangeEvent<HTMLInputElement>) => setV((p) => ({ ...p, [k]: e.target.value })),
   });
@@ -49,24 +46,17 @@ export function VenueForm({ venue, nextSort }: { venue: VenueAdmin | null; nextS
           <Field label="Link ảnh sân" error={save.err("image_url")}>
             <input className="input" inputMode="url" placeholder="https://…" {...txt("image_url")} />
           </Field>
-          <Field label="Giờ coach dạy" error={save.err("hours_text")}>
-            <input className="input" maxLength={120} placeholder="Ví dụ: T3, T5 18:00–21:00" {...txt("hours_text")} />
-          </Field>
-          <div className="grid grid-cols-2 gap-3.5">
-            <Field label="Số sân" error={save.err("court_count")}>
-              <UnitInput unit="sân" inputMode="numeric" maxLength={2} {...txt("court_count")} />
-            </Field>
-            <Field label="Thứ tự hiện" error={save.err("sort")}>
-              <input className="input num" inputMode="numeric" maxLength={4} {...txt("sort")} />
-            </Field>
-          </div>
-          <Field label="Giá thuê / giờ" error={save.err("rent_per_hour")}>
-            <UnitInput unit="đ" inputMode="numeric" maxLength={12} placeholder="0" {...txt("rent_per_hour")} />
-          </Field>
-          <div className="flex items-center gap-2.5 font-medium md:pt-6">
+          <div className="flex items-center gap-2.5 font-medium md:col-span-2">
             <Switch checked={v.is_public} onChange={(b) => setV((p) => ({ ...p, is_public: b }))} label="Hiện trên trang công khai" />
             Hiện trên trang công khai
           </div>
+        </div>
+        <div className="divide-row mt-4 pt-4">
+          <div className="mb-3">
+            <b>Giá thuê sân</b>
+            <p className="text-[13px] text-faint">Giá mỗi giờ cho một sân, theo khung giờ. Ngày thường và cuối tuần tính riêng.</p>
+          </div>
+          <PriceTable rules={v.price_rules} onChange={(r) => setV((p) => ({ ...p, price_rules: r }))} error={save.err("price_rules")} />
         </div>
         <div className="mt-3.5">
           <SaveBar save={save} label={venue ? "Lưu sân" : "Thêm sân"}>
@@ -77,7 +67,6 @@ export function VenueForm({ venue, nextSort }: { venue: VenueAdmin | null; nextS
             )}
           </SaveBar>
         </div>
-        <p className="mt-2 text-xs text-faint">Giá thuê dùng để tính chi phí sân cho từng buổi trong Thu chi.</p>
       </form>
       {venue && (
         <form action={deleteVenue} className="divide-row mt-3.5 flex flex-wrap items-center justify-between gap-2 pt-3.5">

@@ -3,14 +3,13 @@ import { Icon } from "@/components/icon";
 import { SettingsShell } from "@/components/settings/shell";
 import { VenueForm } from "@/components/settings/venue-form";
 import { Thumb } from "@/components/thumb";
-import { formatVnd } from "@/lib/format";
 import type { VenueAdmin } from "@/lib/settings-types";
+import { DAY_GROUPS, priceSummary } from "@/lib/venue-price";
 
 const BASE = "/quan-ly/cai-dat/san";
 
 export function VenuesView({ venues, courses, editId }: { venues: VenueAdmin[]; courses: { title: string; venue_id: string | null }[]; editId?: string }) {
   const editing = venues.find((v) => v.id === editId) ?? null;
-  const nextSort = venues.reduce((m, v) => Math.max(m, v.sort), -1) + 1;
   return (
     <SettingsShell
       on="san"
@@ -26,9 +25,7 @@ export function VenuesView({ venues, courses, editId }: { venues: VenueAdmin[]; 
         {venues.map((v) => {
           const used = courses.filter((c) => c.venue_id === v.id).map((c) => c.title);
           const rows: [string, string | null][] = [
-            ["Sân", v.court_count ? `${v.court_count} sân` : null],
-            ["Giá thuê", v.rent_per_hour != null ? `${formatVnd(v.rent_per_hour)!.replace("đ", " đ")} / giờ` : null],
-            ["Giờ coach dạy", v.hours_text],
+            ...DAY_GROUPS.map((g): [string, string | null] => [g.label, priceSummary(v.price_rules.filter((r) => r.days === g.value))]),
             ["Khoá dạy ở đây", used.length ? used.join(", ") : null],
           ];
           return (
@@ -66,7 +63,7 @@ export function VenuesView({ venues, courses, editId }: { venues: VenueAdmin[]; 
           );
         })}
       </div>
-      <VenueForm key={editing?.id ?? `moi-${venues.length}`} venue={editing} nextSort={nextSort} />
+      <VenueForm key={editing?.id ?? `moi-${venues.length}`} venue={editing} />
     </SettingsShell>
   );
 }

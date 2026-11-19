@@ -26,7 +26,7 @@ describe("menu", () => {
     expect(perms).toContain("lich-cua-toi");
     expect(perms).not.toContain("tai-chinh");
   });
-  it("coach chủ thấy mọi nhóm", () => {
+  it("Team Leader thấy mọi nhóm", () => {
     const perms = permsFor(["chu"]);
     expect(menuFor((p) => perms.includes(p)).length).toBe(MENU.length);
   });

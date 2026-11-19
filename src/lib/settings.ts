@@ -19,7 +19,7 @@ export type CollectSettings = {
 export type DeductMode = "co-mat-hoac-khong-bao" | "chi-co-mat" | "moi-buoi";
 export type TrialMode = "co-phi" | "mien-phi" | "khong-nhan";
 
-/** Quy định lớp, áp dụng cho mọi lớp. */
+/** Quy định lớp học, áp dụng cho mọi lớp. */
 export type RulesSettings = {
   notice_hours: number; // hạn báo nghỉ trước giờ học
   deduct_mode: DeductMode; // khi nào trừ một buổi trong gói
@@ -86,7 +86,6 @@ export type CoachSettings = {
   notify: NotifySettings;
   permissions: PermissionsSettings;
   lead_assign: LeadAssignSettings;
-  custom_domain: string;
 };
 
 export const DEFAULT_SETTINGS: CoachSettings = {
@@ -112,7 +111,6 @@ export const DEFAULT_SETTINGS: CoachSettings = {
   },
   permissions: Object.fromEntries(PERMISSIONS.map((p) => [p.key, { sale: p.sale, "tro-giang": p.tro }])) as PermissionsSettings,
   lead_assign: { mode: "coach-giao", alert_24h: true },
-  custom_domain: "",
 };
 
 const obj = (v: unknown): Record<string, unknown> => (v && typeof v === "object" && !Array.isArray(v) ? (v as Record<string, unknown>) : {});
@@ -138,7 +136,6 @@ export function getSettings(raw: unknown): CoachSettings {
     },
     permissions: mergeEach(DEFAULT_SETTINGS.permissions, r.permissions),
     lead_assign: { ...DEFAULT_SETTINGS.lead_assign, ...obj(r.lead_assign) },
-    custom_domain: typeof r.custom_domain === "string" ? r.custom_domain : "",
   };
 }
 

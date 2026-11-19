@@ -7,7 +7,6 @@ import { fieldErrors } from "@/lib/lead-schema";
 import { requireOwner, saveSettings } from "@/lib/owner";
 import {
   courseSchema,
-  domainSchema,
   inviteSchema,
   primaryRole,
   memberSchema,
@@ -58,7 +57,9 @@ export async function saveVenue(_prev: FormState, payload: unknown): Promise<For
     const { data, error } = await supabase.from("venues").update(venue).eq("id", id).eq("coach_id", session.coach.id).select("id");
     if (error || !data.length) return failed("saveVenue", error);
   } else {
-    const { error } = await supabase.from("venues").insert({ ...venue, coach_id: session.coach.id });
+    // Sân mới xếp cuối danh sách.
+    const { count } = await supabase.from("venues").select("id", { count: "exact", head: true }).eq("coach_id", session.coach.id);
+    const { error } = await supabase.from("venues").insert({ ...venue, coach_id: session.coach.id, sort: count ?? 0 });
     if (error) return failed("saveVenue", error);
   }
   refresh();
@@ -154,23 +155,13 @@ export async function saveNotify(_prev: FormState, payload: unknown): Promise<Fo
   return SAVED;
 }
 
-export async function saveDomain(_prev: FormState, payload: unknown): Promise<FormState> {
-  const session = await requireOwner();
-  const parsed = domainSchema.safeParse(payload);
-  if (!parsed.success) return invalid(parsed.error);
-  if (!(await saveSettings(session.coach.id, parsed.data))) return failed("saveDomain", null);
-  revalidatePath(BASE, "layout");
-  return SAVED;
-}
-
-// ---------------------------------------------------------------- thành viên & lời mời
 export async function saveMember(_prev: FormState, payload: unknown): Promise<FormState> {
   const session = await requireOwner();
   const parsed = memberSchema.safeParse(payload);
   if (!parsed.success) return invalid(parsed.error);
   const { user_id, ...member } = parsed.data;
   if (user_id === session.userId && !member.roles.includes("chu")) {
-    return { ok: false, message: "Bạn không tự bỏ vai trò coach chủ của chính mình được.", errors: { roles: "Giữ vai trò Coach chủ" } };
+    return { ok: false, message: "Bạn không tự bỏ vai trò Team Leader của chính mình được.", errors: { roles: "Giữ vai trò Team Leader" } };
   }
 
   const supabase = await serverClient();
@@ -180,8 +171,8 @@ export async function saveMember(_prev: FormState, payload: unknown): Promise<Fo
     .eq("coach_id", session.coach.id)
     .eq("user_id", user_id)
     .select("user_id");
-  if (error?.message.includes("last_owner")) return { ok: false, message: "Đội cần ít nhất một coach chủ." };
-  if (error?.message.includes("cannot_change_self")) return { ok: false, message: "Bạn không tự bỏ vai trò coach chủ của mình được." };
+  if (error?.message.includes("last_owner")) return { ok: false, message: "Đội cần ít nhất một Team Leader." };
+  if (error?.message.includes("cannot_change_self")) return { ok: false, message: "Bạn không tự bỏ vai trò Team Leader của mình được." };
   if (error || !data.length) return failed("saveMember", error);
   revalidatePath("/quan-ly", "layout");
   return SAVED;
@@ -243,4 +234,31 @@ export async function saveTemplate(_prev: FormState, payload: unknown): Promise<
   if (error) return failed("saveTemplate", error);
   revalidatePath(`${BASE}/mau-tin`);
   return SAVED;
+}
+
+// ---------------------------------------------------------------- ảnh công khai
+const IMAGE_KINDS = ["avatar", "bia", "nen", "gioi-thieu"] as const;
+const IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+
+/**
+ * Tải một ảnh (đã nén ở trình duyệt) vào kho công khai "anh-cong-khai", trả đường dẫn công khai.
+ * Đường dẫn bắt đầu bằng coach_id; database chỉ cho Team Leader của coach đó ghi.
+ */
+export async function uploadPublicImage(form: FormData): Promise<{ url?: string; error?: string }> {
+  const session = await requireOwner();
+  const kind = String(form.get("kind"));
+  const file = form.get("file");
+  if (!IMAGE_KINDS.includes(kind as (typeof IMAGE_KINDS)[number])) return { error: "Loại ảnh không đúng." };
+  if (!(file instanceof File) || file.size === 0) return { error: "Chưa chọn ảnh." };
+  if (!IMAGE_TYPES.includes(file.type)) return { error: "Chỉ nhận ảnh JPG, PNG, WEBP hoặc GIF." };
+  if (file.size > 4 * 1024 * 1024) return { error: "Ảnh tối đa 4 MB." };
+  const ext = file.type === "image/jpeg" ? "jpg" : file.type.split("/")[1];
+  const path = `${session.coach.id}/${kind}/${crypto.randomUUID()}.${ext}`;
+  const supabase = await serverClient();
+  const { error } = await supabase.storage.from("anh-cong-khai").upload(path, file, { contentType: file.type, cacheControl: "31536000" });
+  if (error) {
+    console.error("uploadPublicImage", error);
+    return { error: "Chưa tải được ảnh lên. Bạn đã chạy migration ảnh hồ sơ chưa?" };
+  }
+  return { url: supabase.storage.from("anh-cong-khai").getPublicUrl(path).data.publicUrl };
 }

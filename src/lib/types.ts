@@ -27,6 +27,10 @@ export type Coach = {
   bio: string | null;
   avatar_url: string | null;
   cover_url: string | null;
+  /** Ảnh nền trang công khai. */
+  bg_url?: string | null;
+  /** Bộ ảnh tab Giới thiệu. */
+  gallery?: { url: string; caption: string }[];
   birth_year: number | null;
   show_age: boolean;
   gender: "nam" | "nu" | "khac" | null;
@@ -182,7 +186,7 @@ export type LeadNote = {
 };
 
 export type MemberRole = "owner" | "quan-ly" | "coach" | "sale" | "tro-giang" | "co-dong";
-export const ROLE_LABEL: Record<MemberRole, string> = { owner: "Coach chủ", "quan-ly": "Quản lý đào tạo", coach: "Coach", sale: "Sale", "tro-giang": "Trợ giảng", "co-dong": "Cổ đông" };
+export const ROLE_LABEL: Record<MemberRole, string> = { owner: "Team Leader", "quan-ly": "Quản lý đào tạo", coach: "Coach", sale: "Sale", "tro-giang": "Trợ giảng", "co-dong": "Cổ đông" };
 export type Member = { user_id: string; role: MemberRole; roles?: string[]; display_name: string | null; commission_pct?: number; wage_per_session?: number };
 
 export type PostTopic = "luat" | "ky-thuat" | "chien-thuat" | "the-luc" | "dung-cu";

@@ -322,7 +322,7 @@ export async function updateEnrollment(f: FormData) {
   if (closer) {
     const { data: m } = await db.from("coach_members").select("roles").eq("coach_id", coachId).eq("user_id", closer).maybeSingle();
     const roles: string[] = m?.roles ?? [];
-    if (!roles.some((r) => r === "chu" || r === "quan-ly" || r === "sale")) throw new Error("Người chốt phải là sale, quản lý hoặc coach chủ.");
+    if (!roles.some((r) => r === "chu" || r === "quan-ly" || r === "sale")) throw new Error("Người chốt phải là sale, quản lý hoặc Team Leader.");
   }
   const { error } = await db
     .from("enrollments")

@@ -10,7 +10,7 @@ import { serverClient } from "@/lib/supabase/server";
 const TI_LE = "/quan-ly/cai-dat/ti-le";
 const CHIA = "/quan-ly/tai-chinh/chia-tien";
 
-/** Thêm (hoặc thay) tỉ lệ có hiệu lực từ một ngày. Chỉ coach chủ; database kiểm tra lại tổng 100% và quyền. */
+/** Thêm (hoặc thay) tỉ lệ có hiệu lực từ một ngày. Chỉ Team Leader; database kiểm tra lại tổng 100% và quyền. */
 export async function saveSplitRule(form: FormData) {
   const session = await requireOwner();
   const parsed = parseRuleForm((k) => {
@@ -43,7 +43,7 @@ export async function deleteSplitRule(form: FormData) {
   redirect(TI_LE);
 }
 
-/** Tính lại toàn bộ bút toán của một tháng chưa chốt (database chỉ cho coach chủ). */
+/** Tính lại toàn bộ bút toán của một tháng chưa chốt (database chỉ cho Team Leader). */
 export async function regenMonth(form: FormData) {
   const session = await requirePerm("tai-chinh");
   const month = String(form.get("month"));
@@ -72,7 +72,7 @@ const back = (path: string, msg: string) => redirect(`${path}${path.includes("?"
 async function uploadProof(db: Awaited<ReturnType<typeof serverClient>>, coachId: string, kind: string, f: FormData): Promise<string | null> {
   const file = f.get("proof");
   if (!(file instanceof File) || file.size === 0) return null;
-  if (file.size > 5 * 1024 * 1024) throw new Error("Ảnh tối đa 5 MB.");
+  if (file.size > 4 * 1024 * 1024) throw new Error("Ảnh tối đa 4 MB.");
   if (!PROOF_TYPES.includes(file.type)) throw new Error("Chỉ nhận ảnh JPG, PNG, WEBP, HEIC hoặc PDF.");
   const ext = (file.name.split(".").pop() ?? "jpg").toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 5) || "jpg";
   const path = `${coachId}/${kind}/${crypto.randomUUID()}.${ext}`;

@@ -37,7 +37,7 @@ export function PublicShell({
   ];
 
   return (
-    <>
+    <div className="pub-root">
       <header className="pub-top">
         <Logo name={coach.display_name} />
         <div className="hide-m flex items-center gap-2.5">
@@ -51,7 +51,11 @@ export function PublicShell({
           </Link>
         </div>
       </header>
-      <div className="pub-cover" />
+      {coach.bg_url && <div className="pub-bg" style={{ backgroundImage: `url(${JSON.stringify(coach.bg_url)})` }} aria-hidden />}
+      <div
+        className={`pub-cover ${coach.cover_url ? "has-img" : ""}`}
+        style={coach.cover_url ? { backgroundImage: `linear-gradient(180deg, rgba(15,27,51,.15), rgba(15,27,51,.55)), url(${JSON.stringify(coach.cover_url)})` } : undefined}
+      />
       <div className="pub-wrap">
         <aside className="card pcard">
           <Avatar name={coach.display_name} url={coach.avatar_url} size={112} />
@@ -96,6 +100,6 @@ export function PublicShell({
         © {new Date().getFullYear()} {coach.display_name} · Pickleball cho người mới và người muốn nâng trình
       </footer>
       <StickyCta zalo={zalo} />
-    </>
+    </div>
   );
 }

@@ -31,7 +31,7 @@ export async function splitDb(coachId: string) {
   const db = await serverClient();
   return {
     rules: () => optional(db.from("split_rules").select("*").eq("coach_id", coachId).order("effective_from", { ascending: false }), [] as RuleRow[]),
-    /** Bút toán của tháng; RLS tự lọc: coach chủ thấy hết, người khác chỉ thấy phần của mình. */
+    /** Bút toán của tháng; RLS tự lọc: Team Leader thấy hết, người khác chỉ thấy phần của mình. */
     entriesOfMonth: (month: string) =>
       optional(db.from("split_entries").select("*").eq("coach_id", coachId).eq("month", month).order("entry_date").limit(20000), [] as SplitEntry[]),
     closedMonths: async () => (await optional(db.from("split_months").select("month").eq("coach_id", coachId), [] as { month: string }[])).map((m) => m.month),
@@ -108,12 +108,12 @@ export type PerfRow = { month: string; teacher_id: string; sessions: number; sub
 export async function reportDb(coachId: string) {
   const db = await serverClient();
   return {
-    /** Số tổng theo tháng (coach chủ, quản lý, cổ đông). */
+    /** Số tổng theo tháng (Team Leader, quản lý, cổ đông). */
     summary: async (from: string, to: string) =>
       (await optional(db.rpc("split_summary", { p_coach: coachId, p_from: from, p_to: to }), [] as { month: string; kind: string; amount: number }[])).map((r) => ({ ...r, amount: Number(r.amount) })),
     performance: async (from: string, to: string) =>
       (await optional(db.rpc("coach_performance", { p_coach: coachId, p_from: from, p_to: to }), [] as PerfRow[])).map((r) => ({ ...r, revenue: Number(r.revenue), coach_amount: Number(r.coach_amount) })),
-    /** Bút toán của chính người đang đăng nhập (RLS chỉ trả dòng của họ, trừ coach chủ nên lọc thêm). */
+    /** Bút toán của chính người đang đăng nhập (RLS chỉ trả dòng của họ, trừ Team Leader nên lọc thêm). */
     myEntries: (userId: string, from: string, to: string) =>
       optional(db.from("split_entries").select("*").eq("coach_id", coachId).eq("party_user_id", userId).gte("month", from).lte("month", to).order("entry_date").limit(20000), [] as SplitEntry[]),
     entriesOfKind: (kind: PartyKind, from: string, to: string) =>
