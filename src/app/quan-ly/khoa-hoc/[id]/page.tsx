@@ -4,7 +4,7 @@ import { ActionForm, Submit } from "@/components/action-form";
 import { PageHead } from "@/components/admin-shell";
 import { Avatar } from "@/components/avatar";
 import { Icon } from "@/components/icon";
-import { addSession, createStudent, enrollStudent, unenroll, updateClass } from "@/app/quan-ly/_actions/teaching";
+import { addSession, createStudent, enrollStudent, unenroll, updateClass, updateEnrollment } from "@/app/quan-ly/_actions/teaching";
 import { requirePerm } from "@/lib/auth";
 import { formatVnd } from "@/lib/format";
 import { CLASS_STATUSES, sessionsLeft } from "@/lib/teaching";
@@ -106,7 +106,8 @@ export default async function LopPage({ params }: { params: Promise<{ id: string
               if (!st) return null;
               const left = sessionsLeft(e.sessions_total, attendance.filter((a) => a.student_id === st.id && sessionIds.has(a.session_id)));
               return (
-                <div key={e.id} className={`flex items-center gap-2.5 py-2.5 ${i ? "divide-row" : ""}`}>
+                <div key={e.id} className={`py-2.5 ${i ? "divide-row" : ""}`}>
+                <div className="flex items-center gap-2.5">
                   <Avatar name={st.full_name} soft />
                   <Link href={`/quan-ly/hoc-vien/${st.id}`} className="min-w-0 flex-1">
                     <b className="block truncate">{st.full_name}</b>
@@ -119,6 +120,23 @@ export default async function LopPage({ params }: { params: Promise<{ id: string
                       <button className="btn sm ghost" aria-label={`Cho ${st.full_name} nghỉ lớp`}>Nghỉ</button>
                     </form>
                   )}
+                </div>
+                {canEdit && (
+                  <details className="mt-1.5">
+                    <summary className="cursor-pointer text-[13px] text-faint">
+                      {e.price_per_session ? `${formatVnd(e.price_per_session)} / buổi` : e.price != null ? `Học phí ${formatVnd(e.price)}${e.sessions_total ? ` · ${e.sessions_total} buổi` : ""}` : "Chưa có học phí"}
+                      {!e.closer_id && <span className="pill warn ml-1.5">Chưa có người chốt</span>} · sửa
+                    </summary>
+                    <form action={updateEnrollment} className="mt-2 grid grid-cols-2 gap-2 md:grid-cols-[1fr_80px_1fr_1.3fr_auto]">
+                      <input type="hidden" name="id" value={e.id} />
+                      <input name="price" inputMode="numeric" className="input num" style={{ height: 40 }} placeholder="Học phí gói" aria-label="Học phí gói (đồng)" defaultValue={e.price ?? ""} />
+                      <input name="sessions_total" inputMode="numeric" className="input num" style={{ height: 40 }} placeholder="Số buổi" aria-label="Số buổi của gói" defaultValue={e.sessions_total ?? ""} />
+                      <input name="price_per_session" inputMode="numeric" className="input num" style={{ height: 40 }} placeholder="Hoặc phí / buổi" aria-label="Phí mỗi buổi (trả theo buổi)" defaultValue={e.price_per_session ?? ""} />
+                      <CloserSelect members={closerMembers} defaultValue={e.closer_id} />
+                      <button className="btn sm ghost col-span-2 md:col-span-1">Lưu</button>
+                    </form>
+                  </details>
+                )}
                 </div>
               );
             })}

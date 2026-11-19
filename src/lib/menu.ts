@@ -79,7 +79,7 @@ export const MENU: MenuGroup[] = [
     children: [
       { label: "Sổ thu chi", href: `${Q}/thu-chi`, perm: "tai-chinh" },
       { label: "Công nợ học viên", href: `${Q}/thu-chi/cong-no`, perm: "tai-chinh" },
-      { label: "Chia tiền tháng", perm: "tai-chinh" },
+      { label: "Chia tiền tháng", href: `${Q}/tai-chinh/chia-tien`, perm: "tai-chinh" },
       { label: "Chi trả", perm: "tai-chinh" },
       { label: "Trợ giảng", perm: "tro-giang-bang" },
       { label: "Các quỹ", perm: "quy-xem" },
@@ -110,7 +110,7 @@ export const MENU: MenuGroup[] = [
     children: [
       { label: "Hồ sơ trung tâm", href: `${Q}/cai-dat/ho-so`, perm: "cai-dat", also: new RegExp(`^${Q}/cai-dat/?$`) },
       { label: "Quy định lớp", href: `${Q}/cai-dat/quy-dinh`, perm: "cai-dat" },
-      { label: "Tỉ lệ chia & cổ đông", perm: "ti-le" },
+      { label: "Tỉ lệ chia & cổ đông", href: `${Q}/cai-dat/ti-le`, perm: "ti-le" },
       { label: "Thanh toán", href: `${Q}/cai-dat/nhan-tien`, perm: "cai-dat" },
       { label: "Phân quyền", href: `${Q}/cai-dat/thanh-vien`, perm: "cai-dat" },
       { label: "Sân dạy", href: `${Q}/cai-dat/san`, perm: "cai-dat" },

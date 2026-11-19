@@ -38,7 +38,8 @@ Chạy theo thứ tự, mỗi file một lần. Nếu Supabase hiện cảnh bá
 8. `supabase/migrations/20261121000000_course_kind_nhom.sql` — thêm loại khoá "Nhóm nhỏ"
 9. `supabase/migrations/20261122000000_stats_as_text.sql` — số liệu nổi bật của coach là chữ tự do
 10. `supabase/migrations/20261123000000_roles_team.sql` — nhiều vai trò, người dạy / dạy thay, người chốt, quản lý xác nhận xếp lớp, quyền theo vai trò
-11. `supabase/seed.sql` — nội dung mẫu (chạy lại nhiều lần cũng không sao). Sinh lại bằng `npm run seed:gen`.
+11. `supabase/migrations/20261124000000_split_engine.sql` — bộ máy chia tiền: tỉ lệ & cổ đông, bút toán chia theo buổi × học viên (tự ghi khi điểm danh / hoàn tất buổi)
+12. `supabase/seed.sql` — nội dung mẫu (chạy lại nhiều lần cũng không sao). Sinh lại bằng `npm run seed:gen`.
 
 ### Dữ liệu demo (tuỳ chọn)
 
@@ -92,3 +93,9 @@ Menu trái chia 3 nhóm: **Hằng ngày** (Tổng quan, Lịch, Học viên, L�
 Một người có thể có nhiều vai trò (Cài đặt › Phân quyền): **Coach chủ**, **Quản lý đào tạo**, **Cổ đông**, **Coach**, **Sale**, **Trợ giảng**. Quyền của từng vai trò khai báo ở `src/lib/permissions.ts`; menu, từng trang và từng server action kiểm tra bằng `requirePerm()`, còn database chặn bằng RLS (`has_any_role`, `works_in_session`…). Trợ giảng không đọc trực tiếp bảng học viên / lớp; danh sách học viên của buổi lấy qua hàm `session_roster()` (không có số điện thoại, học phí, ghi chú).
 
 Tuyển sinh: chỉ chuyển sang **Đã chốt** qua nút Chốt / xác nhận tiền offer, bắt buộc chọn **người chốt** (database cũng chặn). Người chốt được lưu theo từng đăng ký học viên × lớp. Sau khi chốt, nhu cầu nằm ở Cần xử lý của quản lý đào tạo cho tới khi bấm "Xác nhận đã xếp lớp".
+
+## Chia tiền theo buổi
+
+Mỗi buổi học (không phải học thử, không bị huỷ) có học viên bị trừ buổi theo Quy định lớp sinh **bút toán** cho từng học viên: khoản đem chia = phí buổi (trả theo buổi) hoặc giá gói ÷ số buổi (làm tròn xuống). Khoản này chia theo tỉ lệ ở Cài đặt › Tỉ lệ chia & cổ đông (mặc định sale 10%, coach đứng lớp 50%, quỹ dự phòng 5%, quỹ vận hành 10%, quỹ phát triển 5%, cổ đông 20%). Mỗi phần làm tròn xuống, phần lẻ vào quỹ vận hành. Sale = người chốt của đăng ký; coach = người dạy thực tế của buổi (kể cả dạy thay).
+
+Database tự ghi lại bút toán (`regen_session_split`) khi đổi điểm danh, trạng thái / người dạy / giờ của buổi, học phí / số buổi / người chốt của đăng ký, hoặc tỉ lệ — trừ khi tháng đó đã chốt (`split_months`). Bút toán không ai ghi tay qua API; coach chủ thấy hết, người khác chỉ thấy phần của mình. Kiểm tra trên Postgres thử: `psql -v ON_ERROR_STOP=1 -f supabase/tests/split_engine_test.sql`.

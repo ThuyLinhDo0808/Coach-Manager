@@ -67,6 +67,7 @@ export const SETTINGS_MENU = [
   { slug: "san", label: "Sân dạy" },
   { slug: "mau-khoa", label: "Gói buổi" },
   { slug: "quy-dinh", label: "Quy định lớp" },
+  { slug: "ti-le", label: "Tỉ lệ chia & cổ đông" },
   { slug: "nhan-tien", label: "Thanh toán" },
   { slug: "thanh-vien", label: "Phân quyền" },
   { slug: "mau-tin", label: "Mẫu tin nhắn" },

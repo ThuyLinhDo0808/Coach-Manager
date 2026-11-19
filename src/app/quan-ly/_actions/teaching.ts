@@ -315,6 +315,24 @@ export async function enrollStudent(f: FormData) {
   refresh();
 }
 
+/** Sửa học phí, số buổi, phí buổi, người chốt của một đăng ký. Database tự tính lại bút toán chia tiền (tháng chưa chốt). */
+export async function updateEnrollment(f: FormData) {
+  const { coachId, db } = await ctx("lop-sua");
+  const closer = opt(f, "closer_id");
+  if (closer) {
+    const { data: m } = await db.from("coach_members").select("roles").eq("coach_id", coachId).eq("user_id", closer).maybeSingle();
+    const roles: string[] = m?.roles ?? [];
+    if (!roles.some((r) => r === "chu" || r === "quan-ly" || r === "sale")) throw new Error("Người chốt phải là sale, quản lý hoặc coach chủ.");
+  }
+  const { error } = await db
+    .from("enrollments")
+    .update({ price: int(f, "price"), sessions_total: int(f, "sessions_total"), price_per_session: int(f, "price_per_session"), closer_id: closer })
+    .eq("id", str(f, "id"))
+    .eq("coach_id", coachId);
+  if (error) throw error;
+  refresh();
+}
+
 export async function unenroll(f: FormData) {
   const { coachId, db } = await ctx("lop-sua");
   const { error } = await db.from("enrollments").update({ status: "nghi" }).eq("id", str(f, "id")).eq("coach_id", coachId);
