@@ -6,6 +6,13 @@ export function formatVnd(amount: number | null | undefined): string | null {
   return `${vnd.format(amount)}đ`;
 }
 
+/** Số liệu nổi bật (chữ tự do): "1200" → "1.200", "~1000" giữ nguyên, rỗng → "—". */
+export function statText(v: string | number | null | undefined): string {
+  const s = String(v ?? "").trim();
+  if (!s) return "—";
+  return /^\d+$/.test(s) ? vnd.format(Number(s)) : s;
+}
+
 /** 1200 → "1.200" */
 export function formatNumber(n: number): string {
   return vnd.format(n);

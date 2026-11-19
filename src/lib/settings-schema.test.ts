@@ -48,7 +48,7 @@ describe("profileSchema", () => {
 
   it("đổi chữ thành số, bỏ dòng trống", () => {
     const d = profileSchema.parse(base);
-    expect(d).toMatchObject({ birth_year: 1995, dupr: 4.5, stat_hours: 1200, area: "Hà Nội", tagline: null, avatar_url: null });
+    expect(d).toMatchObject({ birth_year: 1995, dupr: 4.5, stat_hours: "1.200", area: "Hà Nội", tagline: null, avatar_url: null });
     expect(d.teaching_style).toEqual(["Sửa qua video", "Nhóm nhỏ"]);
     expect(d.strengths).toEqual([{ title: "Footwork", text: "Di chuyển" }]);
     expect(d.experience).toEqual([{ year: "2024", title: "Bắt đầu dạy", detail: "" }]);

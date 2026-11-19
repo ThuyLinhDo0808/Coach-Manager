@@ -59,10 +59,11 @@ export const profileSchema = z.object({
   gender: z.preprocess((v) => (blank(v) ? null : v), z.enum(["nam", "nu", "khac"]).nullable()),
   area: nullText(80),
   dupr: optDec(1, 8, "DUPR nằm trong khoảng 1.0 – 8.0"),
-  stat_hours: int(0, 1_000_000, "Số giờ dạy chưa đúng"),
-  stat_students: int(0, 1_000_000, "Số học viên chưa đúng"),
-  stat_courses: int(0, 100_000, "Số khoá chưa đúng"),
-  stat_years: int(0, 80, "Số năm kinh nghiệm chưa đúng"),
+  // Chữ tự do, ví dụ "~1000", "> 100", "3+".
+  stat_hours: text(20),
+  stat_students: text(20),
+  stat_courses: text(20),
+  stat_years: text(20),
   teaching_style: lines(12, 160),
   strengths: z
     .array(z.object({ title: text(40), text: text(200) }))

@@ -32,11 +32,11 @@ export type Coach = {
   gender: "nam" | "nu" | "khac" | null;
   area: string | null;
   dupr: number | null;
-  stat_hours: number;
-  stat_students: number;
-  stat_courses: number;
+  stat_hours: string;
+  stat_students: string;
+  stat_courses: string;
   stat_rating: number | null;
-  stat_years: number;
+  stat_years: string;
   teaching_style: string[];
   strengths: { title: string; text: string }[];
   experience: { year: string; title: string; detail?: string }[];
