@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { regenMonth } from "@/app/quan-ly/_actions/split";
+import { closeMonth, regenMonth } from "@/app/quan-ly/_actions/split";
 import { PageHead } from "@/components/admin-shell";
 import { requirePerm } from "@/lib/auth";
 import { dong, isMonth, monthRange, shiftMonth } from "@/lib/money";
@@ -12,7 +12,7 @@ export const metadata = { title: "Chia tiền tháng" };
 
 const ORDER: PartyKind[] = ["coach", "sale", "co-dong", "quy-van-hanh", "quy-du-phong", "quy-phat-trien"];
 
-export default async function ChiaTienPage({ searchParams }: { searchParams: Promise<{ thang?: string; "tinh-lai"?: string }> }) {
+export default async function ChiaTienPage({ searchParams }: { searchParams: Promise<{ thang?: string; "tinh-lai"?: string; loi?: string }> }) {
   const sp = await searchParams;
   const session = await requirePerm("tai-chinh");
   const month = isMonth(sp.thang) ? sp.thang : vnDate().slice(0, 7);
@@ -72,6 +72,27 @@ export default async function ChiaTienPage({ searchParams }: { searchParams: Pro
           </form>
         )}
       </PageHead>
+      {sp.loi && <div className="card mb-4 text-[13px] font-semibold text-bad" role="alert">{sp.loi}</div>}
+      {isClosed ? (
+        <div className="card mb-4 flex flex-wrap items-center gap-3">
+          <span className="pill good">Đã chốt</span>
+          <span className="min-w-0 flex-1 text-[13px] text-muted">Số của tháng đã khoá. Sửa điểm danh bây giờ không làm đổi số; muốn sửa thì sửa ở Chi trả (bắt buộc lý do, có nhật ký).</span>
+          <Link href={`/quan-ly/tai-chinh/chi-tra?thang=${month}`} className="btn sm navy">Mở Chi trả</Link>
+        </div>
+      ) : session.roles.includes("chu") && month <= vnDate().slice(0, 7) && (
+        <details className="card mb-4">
+          <summary className="cursor-pointer font-bold">Chốt tháng {mm}/{y}</summary>
+          <p className="mt-2 text-[13px] text-muted">
+            Chốt sẽ tính lại cả tháng, khoá số (sửa điểm danh sau đó không đổi số) và lập bảng phải trả cho từng người, từng quỹ — gồm cả tiền trợ giảng và điều chỉnh từ tháng trước.
+            {month === vnDate().slice(0, 7) ? " Tháng này chưa hết: các buổi còn lại sẽ không được tính nếu chốt bây giờ." : ""}
+            {missing.length > 0 || notYet.length > 0 ? " Còn mục ở “Cần kiểm tra” — nên xử lý trước khi chốt." : ""}
+          </p>
+          <form action={closeMonth} className="mt-3">
+            <input type="hidden" name="month" value={month} />
+            <button className="btn primary">Chốt tháng {mm}/{y}</button>
+          </form>
+        </details>
+      )}
       {sp["tinh-lai"] && <div className="card mb-4 text-[13px] font-semibold text-good" role="status">Đã tính lại toàn bộ buổi trong tháng theo điểm danh và tỉ lệ hiện có.</div>}
 
       <div className="kpis">

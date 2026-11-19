@@ -39,7 +39,8 @@ Chạy theo thứ tự, mỗi file một lần. Nếu Supabase hiện cảnh bá
 9. `supabase/migrations/20261122000000_stats_as_text.sql` — số liệu nổi bật của coach là chữ tự do
 10. `supabase/migrations/20261123000000_roles_team.sql` — nhiều vai trò, người dạy / dạy thay, người chốt, quản lý xác nhận xếp lớp, quyền theo vai trò
 11. `supabase/migrations/20261124000000_split_engine.sql` — bộ máy chia tiền: tỉ lệ & cổ đông, bút toán chia theo buổi × học viên (tự ghi khi điểm danh / hoàn tất buổi)
-12. `supabase/seed.sql` — nội dung mẫu (chạy lại nhiều lần cũng không sao). Sinh lại bằng `npm run seed:gen`.
+12. `supabase/migrations/20261125000000_month_close_funds.sql` — chốt tháng, bảng phải trả, nhật ký sửa, điều chỉnh tháng sau, các quỹ, trợ giảng, kho ảnh chứng từ riêng tư `chung-tu`
+13. `supabase/seed.sql` — nội dung mẫu (chạy lại nhiều lần cũng không sao). Sinh lại bằng `npm run seed:gen`.
 
 ### Dữ liệu demo (tuỳ chọn)
 
@@ -99,3 +100,12 @@ Tuyển sinh: chỉ chuyển sang **Đã chốt** qua nút Chốt / xác nhận 
 Mỗi buổi học (không phải học thử, không bị huỷ) có học viên bị trừ buổi theo Quy định lớp sinh **bút toán** cho từng học viên: khoản đem chia = phí buổi (trả theo buổi) hoặc giá gói ÷ số buổi (làm tròn xuống). Khoản này chia theo tỉ lệ ở Cài đặt › Tỉ lệ chia & cổ đông (mặc định sale 10%, coach đứng lớp 50%, quỹ dự phòng 5%, quỹ vận hành 10%, quỹ phát triển 5%, cổ đông 20%). Mỗi phần làm tròn xuống, phần lẻ vào quỹ vận hành. Sale = người chốt của đăng ký; coach = người dạy thực tế của buổi (kể cả dạy thay).
 
 Database tự ghi lại bút toán (`regen_session_split`) khi đổi điểm danh, trạng thái / người dạy / giờ của buổi, học phí / số buổi / người chốt của đăng ký, hoặc tỉ lệ — trừ khi tháng đó đã chốt (`split_months`). Bút toán không ai ghi tay qua API; coach chủ thấy hết, người khác chỉ thấy phần của mình. Kiểm tra trên Postgres thử: `psql -v ON_ERROR_STOP=1 -f supabase/tests/split_engine_test.sql`.
+
+### Chốt tháng, chi trả, quỹ, trợ giảng
+
+- **Chốt tháng** (Tài chính › Chia tiền tháng, chỉ coach chủ): tính lại cả tháng, khoá số (`split_months`) và lập bảng phải trả (`split_payouts`) — mỗi người một dòng gộp phần dạy, chốt, cổ đông, trợ giảng, điều chỉnh tháng trước; mỗi quỹ một dòng.
+- **Chi trả**: đánh dấu đã trả kèm ảnh chuyển khoản. Sau khi chốt chỉ coach chủ sửa số, bắt buộc lý do, ghi `split_audit` (ai, lúc nào, số cũ, số mới). Khoản đã trả mà sửa thì chênh lệch thành điều chỉnh tháng sau (`split_adjustments`).
+- **Các quỹ**: số dư = phần vào từ bút toán chia − khoản chi (`fund_expenses`, có loại, ngày, ghi chú, ảnh chứng từ). Quảng cáo chi từ quỹ dự phòng; tiền sân / bóng lớp đặc thù chi từ quỹ vận hành (database chặn sai quỹ).
+- **Trợ giảng** (ngoài 6 phần): cơ chế theo lớp (tiền / buổi, tiền / tháng), học viên đã trả, đã chuyển cho trợ giảng + ảnh.
+- Ảnh lưu ở kho riêng tư `chung-tu` của Supabase Storage, xem qua đường dẫn ký tạm 1 giờ.
+- Kiểm tra: `psql -v ON_ERROR_STOP=1 -f supabase/tests/month_close_test.sql`.

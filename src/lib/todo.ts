@@ -2,7 +2,9 @@ import "server-only";
 import { getLeads } from "@/lib/admin-data";
 import { can, type Session } from "@/lib/auth";
 import { isOverdue, OPEN_STATUSES } from "@/lib/leads";
+import { dong, shiftMonth } from "@/lib/money";
 import { moneyDb } from "@/lib/money-data";
+import { payoutDb, splitDb } from "@/lib/split-data";
 import { sessionsLeft } from "@/lib/teaching";
 import { teachingDb } from "@/lib/teaching-data";
 import { addDays, nowMs, vnDate, vnIso } from "@/lib/time";
@@ -46,6 +48,22 @@ export async function getTodo(session: Session): Promise<TodoGroup[]> {
     groups.push({
       key: "bao-chuyen", icon: "wallet", color: "emerald", title: "Học viên báo đã chuyển khoản, chờ xác nhận",
       items: offers.filter((o) => o.status === "da-bao").map((o) => ({ id: o.id, title: o.title, sub: o.memo, href: "/quan-ly/thu-chi?tab=cho" })),
+    });
+  }
+
+  if (session.roles.includes("chu")) {
+    const prev = shiftMonth(today.slice(0, 7), -1);
+    const [closed, unpaid] = await Promise.all([(await splitDb(coachId)).closedMonths(), (await payoutDb(coachId)).unpaid()]);
+    const [py, pm] = prev.split("-");
+    groups.push({
+      key: "chua-chot-thang", icon: "wallet", color: "emerald", title: "Tháng trước chưa chốt chia tiền",
+      items: closed.includes(prev) ? [] : [{ id: prev, title: `Tháng ${pm}/${py}`, sub: "Kiểm tra rồi bấm Chốt tháng", href: `/quan-ly/tai-chinh/chia-tien?thang=${prev}` }],
+    });
+    groups.push({
+      key: "chua-tra", icon: "wallet", color: "amber", title: "Khoản đã chốt chưa trả",
+      items: unpaid
+        .filter((x) => x.party_kind === "nguoi")
+        .map((x) => ({ id: x.id, title: x.party_name, sub: `${dong(x.amount)} · tháng ${x.month.split("-").reverse().join("/")}`, href: `/quan-ly/tai-chinh/chi-tra?thang=${x.month}` })),
     });
   }
 
