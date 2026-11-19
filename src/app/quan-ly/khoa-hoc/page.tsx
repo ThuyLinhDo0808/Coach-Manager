@@ -7,7 +7,7 @@ import { formatVnd } from "@/lib/format";
 import { CLASS_STATUSES, type ClassStatus } from "@/lib/teaching";
 import { teachingDb } from "@/lib/teaching-data";
 
-export const metadata = { title: "Khoá học & lớp" };
+export const metadata = { title: "Lớp" };
 
 export default async function KhoaHocLopPage({ searchParams }: { searchParams: Promise<{ tt?: string; them?: string }> }) {
   const sp = await searchParams;
@@ -29,7 +29,7 @@ export default async function KhoaHocLopPage({ searchParams }: { searchParams: P
 
   return (
     <>
-      <PageHead icon="book" color="indigo" title="Khoá học & lớp" sub={`${count("dang-dien-ra")} lớp đang diễn ra · ${count("sap-dien-ra")} sắp diễn ra`}>
+      <PageHead icon="book" color="indigo" title="Lớp" sub={`${count("dang-dien-ra")} lớp đang diễn ra · ${count("sap-dien-ra")} sắp diễn ra`}>
         <Link href="/quan-ly/khoa-hoc?them=1" className="btn primary">
           <Icon name="plus" /> Tạo lịch học
         </Link>

@@ -2,7 +2,7 @@ import { ContentView, type ContentParams } from "@/components/content/content-vi
 import { requireOwner } from "@/lib/owner";
 import { getAdminPosts, getAdminReviews, getAdminVideoGroups, getAdminVideos, getCourseOptions } from "@/lib/settings-data";
 
-export const metadata = { title: "Nội dung" };
+export const metadata = { title: "Giáo án" };
 
 // Quản lý nội dung công khai: video, bài viết, đánh giá. Chỉ coach (owner) vào được.
 export default async function NoiDungPage({ searchParams }: { searchParams: Promise<ContentParams> }) {

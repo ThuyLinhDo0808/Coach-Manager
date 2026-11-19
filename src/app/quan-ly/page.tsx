@@ -82,7 +82,7 @@ export default async function TongQuanPage() {
 
   return (
     <>
-      <PageHead icon="home" color="blue" title="Tổng quan" sub={todayLabel}>
+      <PageHead icon="home" color="blue" title="Hôm nay" sub={todayLabel}>
         <Link href="/quan-ly/khoa-hoc?them=1" className="btn primary">
           <Icon name="plus" /> Tạo lịch học
         </Link>

@@ -96,3 +96,24 @@ export function profitByClass(rows: Pick<LedgerRow, "kind" | "amount" | "class_i
   }
   return [...map].map(([class_id, v]) => ({ class_id, ...v, net: v.thu - v.chi })).sort((a, b) => b.net - a.net);
 }
+
+/** Công nợ: học phí thoả thuận của các đăng ký (trừ đã nghỉ) − số đã thu gắn với học viên (trừ hoàn tiền). */
+export function studentDebts<S extends { id: string }>(
+  students: S[],
+  enrollments: { student_id: string; status: string; price: number | null }[],
+  ledger: Pick<LedgerRow, "student_id" | "amount" | "kind" | "category">[],
+): { s: S; owed: number; paid: number; debt: number }[] {
+  const paidBy = new Map<string, number>();
+  for (const r of ledger) {
+    if (!r.student_id) continue;
+    paidBy.set(r.student_id, (paidBy.get(r.student_id) ?? 0) + (r.kind === "thu" ? r.amount : r.category === "hoan-tien" ? -r.amount : 0));
+  }
+  return students
+    .map((s) => {
+      const owed = enrollments.filter((e) => e.student_id === s.id && e.status !== "nghi").reduce((n, e) => n + (e.price ?? 0), 0);
+      const paid = paidBy.get(s.id) ?? 0;
+      return { s, owed, paid, debt: owed - paid };
+    })
+    .filter((x) => x.debt > 0)
+    .sort((a, b) => b.debt - a.debt);
+}

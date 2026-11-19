@@ -1,11 +1,13 @@
 import Link from "next/link";
-import { AdminMenu, AdminTabs } from "@/components/admin-nav";
+import { AdminMenu, AdminTabs, SubTabs } from "@/components/admin-nav";
 import { Avatar } from "@/components/avatar";
 import { Tile, type IconName } from "@/components/icon";
 import type { Session } from "@/lib/auth";
+import { allowedPerms } from "@/lib/permissions";
 
 export function AdminShell({ session, newLeads, children }: { session: Session; newLeads: number; children: React.ReactNode }) {
   const { coach } = session;
+  const perms = allowedPerms(session.role);
   return (
     <div className="app">
       <aside className="side">
@@ -16,7 +18,7 @@ export function AdminShell({ session, newLeads, children }: { session: Session; 
             <small>Khu quản lý</small>
           </div>
         </Link>
-        <AdminMenu role={session.role} newLeads={newLeads} />
+        <AdminMenu perms={perms} newLeads={newLeads} />
       </aside>
       <div className="min-w-0">
         <div className="mtop">
@@ -27,9 +29,12 @@ export function AdminShell({ session, newLeads, children }: { session: Session; 
             <Avatar name={session.memberName ?? session.email} size={32} soft />
           </Link>
         </div>
-        <main className="main">{children}</main>
+        <main className="main">
+          <SubTabs perms={perms} />
+          {children}
+        </main>
       </div>
-      <AdminTabs />
+      <AdminTabs perms={perms} />
     </div>
   );
 }

@@ -2,7 +2,7 @@ import { CoursesView } from "@/components/settings/courses-view";
 import { requireOwner } from "@/lib/owner";
 import { getAdminVenues, getClassCounts, getCourseTemplates } from "@/lib/settings-data";
 
-export const metadata = { title: "Mẫu khoá học" };
+export const metadata = { title: "Gói buổi" };
 
 export default async function MauKhoaPage({ searchParams }: { searchParams: Promise<{ id?: string; moi?: string }> }) {
   const { id, moi } = await searchParams;

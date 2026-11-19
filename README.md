@@ -81,3 +81,7 @@ Giao diện bám bộ mẫu 20 màn (đặc tả mục 4 và 5).
 - Học viên đăng nhập xem lịch, nhận xét, video riêng; quét QR điểm danh.
 - Đối soát chuyển khoản tự động với ngân hàng; tên miền riêng (làm tay trong Vercel theo hướng dẫn ở Cài đặt).
 - Quyền theo vai trò và chia nhu cầu xoay vòng mới được ghi nhận, chưa chặn / chia tự động.
+
+## Menu khu quản lý
+
+Menu trái chia 3 nhóm: **Hằng ngày** (Tổng quan, Lịch, Học viên, Lớp & khoá học), **Kinh doanh** (Tuyển sinh, Tài chính, Thống kê), **Trung tâm** (Đội ngũ, Cài đặt). Bấm một mục để mở các mục con; trên điện thoại, mục con là dải tab ngang đầu trang. Khai báo menu ở `src/lib/menu.ts`; mục con chưa có trang hiện "Sắp có".

@@ -3,7 +3,7 @@ import { requireOwner } from "@/lib/owner";
 import { getSettings } from "@/lib/settings";
 import { getCourseTemplates } from "@/lib/settings-data";
 
-export const metadata = { title: "Nhận tiền" };
+export const metadata = { title: "Thanh toán" };
 
 export default async function NhanTienPage() {
   const session = await requireOwner();

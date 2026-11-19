@@ -6,13 +6,13 @@ import { Icon } from "@/components/icon";
 import { addLedgerEntry, cancelOffer, confirmOffer, deleteLedgerEntry } from "@/app/quan-ly/_actions/money";
 import { getLeads, getMembers } from "@/lib/admin-data";
 import { requireSession } from "@/lib/auth";
-import { categoryLabel, dong, isMonth, LEDGER_CATEGORIES, monthRange, profitByClass, shiftMonth, totals, trieu } from "@/lib/money";
+import { studentDebts, categoryLabel, dong, isMonth, LEDGER_CATEGORIES, monthRange, profitByClass, shiftMonth, totals, trieu } from "@/lib/money";
 import { moneyDb } from "@/lib/money-data";
 import { teachingDb } from "@/lib/teaching-data";
 import { dmy, vnDate, vnIso } from "@/lib/time";
 import { ROLE_LABEL } from "@/lib/types";
 
-export const metadata = { title: "Thu chi" };
+export const metadata = { title: "Sổ thu chi" };
 
 const TABS = [["so", "Sổ thu chi"], ["cho", "Chờ xác nhận"], ["luong", "Lương & hoa hồng"]] as const;
 
@@ -48,19 +48,7 @@ export default async function ThuChiPage({ searchParams }: { searchParams: Promi
   };
   const leadName = (id: string) => leads.find((l) => l.id === id)?.full_name ?? "—";
 
-  // Công nợ: học phí thoả thuận của các lớp đang học / đã tốt nghiệp − số đã thu của học viên.
-  const paidBy = new Map<string, number>();
-  for (const r of allLedger) {
-    if (!r.student_id) continue;
-    paidBy.set(r.student_id, (paidBy.get(r.student_id) ?? 0) + (r.kind === "thu" ? r.amount : r.category === "hoan-tien" ? -r.amount : 0));
-  }
-  const debts = students
-    .map((s) => {
-      const owed = enrollments.filter((e) => e.student_id === s.id && e.status !== "nghi").reduce((n, e) => n + (e.price ?? 0), 0);
-      return { s, debt: owed - (paidBy.get(s.id) ?? 0) };
-    })
-    .filter((x) => x.debt > 0)
-    .sort((a, b) => b.debt - a.debt);
+  const debts = studentDebts(students, enrollments, allLedger);
   const debtTotal = debts.reduce((n, d) => n + d.debt, 0);
 
   const filter = sp.loc === "thu" || sp.loc === "chi" ? sp.loc : null;
@@ -85,7 +73,7 @@ export default async function ThuChiPage({ searchParams }: { searchParams: Promi
 
   return (
     <>
-      <PageHead icon="wallet" color="emerald" title="Thu chi" sub={`Tháng ${mm}/${y}`}>
+      <PageHead icon="wallet" color="emerald" title="Sổ thu chi" sub={`Tháng ${mm}/${y}`}>
         <a href={`/quan-ly/thu-chi/xuat?thang=${month}`} className="btn sm glass">Xuất Excel</a>
         <Link href={href({ them: "1", tab: "so" })} className="btn primary">
           <Icon name="plus" /> Thêm khoản
@@ -99,7 +87,7 @@ export default async function ThuChiPage({ searchParams }: { searchParams: Promi
               {l}{v === "cho" && open.length ? ` ${open.length}` : ""}
             </Link>
           ))}
-          <Link href="/quan-ly/cai-dat/nhan-tien">Nhận tiền</Link>
+          <Link href="/quan-ly/cai-dat/nhan-tien">Thanh toán</Link>
         </div>
         <div className="flex items-center gap-2">
           <Link href={href({ thang: prev })} className="btn sm ghost bg-white" aria-label="Tháng trước">‹</Link>
@@ -112,7 +100,7 @@ export default async function ThuChiPage({ searchParams }: { searchParams: Promi
         <div className="card kpi"><div className="l">Thu</div><div className="v" style={{ fontSize: 24, color: "var(--color-good)" }}>{dong(sum.thu)}</div><div className="s">{rows.filter((r) => r.kind === "thu").length} khoản</div></div>
         <div className="card kpi"><div className="l">Chi</div><div className="v" style={{ fontSize: 24, color: "var(--color-bad)" }}>{dong(sum.chi)}</div><div className="s">{rows.filter((r) => r.kind === "chi").length} khoản</div></div>
         <div className="card kpi"><div className="l">Còn lại</div><div className="v" style={{ fontSize: 24 }}>{dong(sum.net)}</div><div className="s">{change != null ? `${change >= 0 ? "+" : ""}${change}% so với tháng ${prev.slice(5)}` : "chưa có số tháng trước"}</div></div>
-        <div className="card kpi"><div className="l">Học viên còn nợ</div><div className="v" style={{ fontSize: 24, color: debtTotal ? "var(--color-warn)" : undefined }}>{dong(debtTotal)}</div><div className="s">{debts.length} người</div></div>
+        <Link href="/quan-ly/thu-chi/cong-no" className="card kpi"><div className="l">Học viên còn nợ</div><div className="v" style={{ fontSize: 24, color: debtTotal ? "var(--color-warn)" : undefined }}>{dong(debtTotal)}</div><div className="s">{debts.length} người · xem chi tiết</div></Link>
       </div>
 
       {sp.them && tab === "so" && (
@@ -207,17 +195,6 @@ export default async function ThuChiPage({ searchParams }: { searchParams: Promi
                 </table>
               )}
             </div>
-            {debts.length > 0 && (
-              <div className="card">
-                <h2 className="h2">Công nợ học viên</h2>
-                {debts.slice(0, 8).map((d, i) => (
-                  <Link key={d.s.id} href={`/quan-ly/hoc-vien/${d.s.id}`} className={`flex items-center justify-between gap-2 py-2 ${i ? "divide-row" : ""}`}>
-                    <b>{d.s.full_name}</b><span className="num font-bold text-warn">{dong(d.debt)}</span>
-                  </Link>
-                ))}
-                <div className="mt-2 text-xs text-faint">Nợ = học phí thoả thuận của các lớp − số đã thu gắn với học viên.</div>
-              </div>
-            )}
           </div>
         </div>
       )}

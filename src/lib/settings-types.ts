@@ -60,12 +60,12 @@ export type VenueAdmin = {
 export type CourseAdmin = Course & { is_public: boolean; sort: number };
 
 export const SETTINGS_MENU = [
-  { slug: "ho-so", label: "Hồ sơ coach" },
+  { slug: "ho-so", label: "Hồ sơ trung tâm" },
   { slug: "san", label: "Sân dạy" },
-  { slug: "mau-khoa", label: "Mẫu khoá học" },
+  { slug: "mau-khoa", label: "Gói buổi" },
   { slug: "quy-dinh", label: "Quy định lớp" },
-  { slug: "nhan-tien", label: "Nhận tiền" },
-  { slug: "thanh-vien", label: "Thành viên & quyền" },
+  { slug: "nhan-tien", label: "Thanh toán" },
+  { slug: "thanh-vien", label: "Phân quyền" },
   { slug: "mau-tin", label: "Mẫu tin nhắn" },
   { slug: "thong-bao", label: "Thông báo" },
   { slug: "ten-mien", label: "Tên miền riêng" },
