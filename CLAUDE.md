@@ -5,6 +5,12 @@
 Web riêng của Coach Trung Muối: trang công khai cho học viên và khu quản lý nhu cầu học cho coach/sale.
 **Sản phẩm độc lập**: không dùng chung code, backend hay dữ liệu với NexusZone (repo `pickleball-manager`).
 
+## Định hướng (2 giai đoạn)
+- **Giai đoạn 1 (hiện tại)**: xây thương hiệu Coach Trung Muối, đại diện của **NexusZone Academy** (hiện "Thuộc NexusZone Academy" ở chân trang công khai; tên lấy từ `src/lib/brand.ts`). Các coach khác là coach hợp tác (dạy thuê) trong đội của Trung: vai trò Coach, nhận 50% học phí buổi mình đứng lớp; học viên và thương hiệu thuộc trung tâm. Trang công khai chỉ nói về Coach Trung Muối.
+- **Giai đoạn 2 (khi Trung + trợ giảng không cover hết)**: hợp tác và xây thương hiệu cho các coach khác — mỗi coach có trang công khai và đội riêng; NexusZone thiên về dịch vụ thiết kế, xây thương hiệu cho coach (đào tạo và cộng đồng là mảng phụ).
+- Web của Trung là bằng chứng hiệu quả để bán cho coach khác: giữ dữ liệu đo được (nguồn nhu cầu, tỉ lệ chốt, học tiếp, DUPR tăng, doanh thu).
+- Vì vậy khi viết code: không gắn cứng thông tin của Trung (tên, slug, số liệu) — lấy từ bảng `coaches`; dữ liệu mới luôn có `coach_id` và RLS theo coach; thương hiệu chung để ở `src/lib/brand.ts`.
+
 ## Công nghệ
 - Next.js 16 (App Router, TypeScript), Tailwind CSS v4. Không bật `cacheComponents`; trang công khai dùng `export const revalidate`.
 - Supabase (project riêng, tổ chức "ThuyLinhDo0808's Org"). Lược đồ trong `supabase/migrations/`.
