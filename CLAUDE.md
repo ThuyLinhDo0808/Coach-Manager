@@ -1,8 +1,8 @@
-# Coach Trung Muối — quy ước dự án
+# Coach Manager — quy ước dự án
 
 @AGENTS.md
 
-Web riêng của Coach Trung Muối: trang công khai cho học viên và khu quản lý nhu cầu học cho coach/sale.
+Coach Manager: nền tảng web cho nhiều huấn luyện viên — trang công khai cho học viên và khu quản lý nhu cầu học cho coach/sale. Coach đầu tiên là Coach Trung Muối (mã `trung-muoi`, coach mặc định qua `NEXT_PUBLIC_DEFAULT_COACH_SLUG`). Repo `ThuyLinhDo0808/coach-manager` (tên cũ `coach-trung-muoi`).
 **Sản phẩm độc lập**: không dùng chung code, backend hay dữ liệu với NexusZone (repo `pickleball-manager`).
 
 ## Công nghệ
@@ -21,7 +21,7 @@ Web riêng của Coach Trung Muối: trang công khai cho học viên và khu qu
 - Giao diện bám bộ mẫu 20 màn (16/11/2026): nền xám `#f5f5f7`, thẻ trắng bo 20px (`card`), băng navy, nút chính xanh chanh `#B6F03B` (`btn primary`). Các lớp dùng chung (`card`, `btn`, `pill`, `chip`, `seg`, `tile`, `input`, `phead`, `kpis`…) nằm trong `src/app/globals.css`; ưu tiên dùng lại, không tự chế kiểu mới.
 - Điện thoại là dưới 768px: dùng `hide-m` / `only-m`. Lớp `display` của Tailwind thắng lớp trong `@layer components`, nên khi cần ẩn theo màn hình hãy dùng `hide-m` / `only-m`.
 - Phải đẹp ở 1440px và 390px. Điện thoại: hồ sơ thu gọn trên đầu, tab cuộn ngang, nút "Đăng ký học thử" dính đáy.
-- Tên hiển thị là "Coach Trung Muối" (hình trong đặc tả dùng tên giả).
+- Tên hiển thị của coach đầu tiên là "Coach Trung Muối" (hình trong đặc tả dùng tên giả). Tên dự án / repo là "Coach Manager".
 
 ## Quy trình
 - Từ sau lần đẩy khung đầu tiên: làm trên nhánh riêng + PR vào `main`.
