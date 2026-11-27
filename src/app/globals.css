@@ -182,7 +182,7 @@ body {
     .pub-top { padding: 0 16px; height: 56px; }
     .pub-cover { height: 110px; }
     .pub-cover.has-img { height: 160px; }
-    .pub-wrap { grid-template-columns: minmax(0, 1fr); margin-top: -60px; padding: 0 16px 96px; gap: 14px; }
+    .pub-wrap { grid-template-columns: minmax(0, 1fr); margin-top: -60px; padding: 0 16px 20px; gap: 14px; }
     .pcard { position: static; }
     .pcard .avatar { width: 88px; height: 88px; font-size: 28px; }
     .pcard .btns { display: none !important; }

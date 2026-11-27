@@ -70,6 +70,13 @@ where c.slug = 'trung-muoi' and u.email = 'EMAIL_CUA_BAN';
 
 Đăng nhập tại `/dang-nhap`. Từ tài khoản thứ hai trở đi, coach mời ở **Cài đặt › Thành viên & quyền** rồi gửi link `/tham-gia` cho người được mời.
 
+## Định hướng
+
+1. **Giai đoạn 1 — hiện tại.** Xây thương hiệu Coach Trung Muối, đại diện của NexusZone Academy. Các coach khác là coach hợp tác (dạy thuê) trong đội của Trung. Web vừa là kênh tuyển sinh, vừa là bằng chứng hiệu quả (số liệu tuyển sinh, học tiếp, DUPR, doanh thu) để sau này giới thiệu dịch vụ cho coach khác.
+2. **Giai đoạn 2 — khi lượng khoá học vượt sức Trung và đội trợ giảng.** Hợp tác và xây thương hiệu cho các coach khác: mỗi coach có trang công khai, đội và dữ liệu riêng. NexusZone tập trung vào dịch vụ thiết kế, xây thương hiệu cho coach; đào tạo và cộng đồng là mảng phụ.
+
+Database đã sẵn cho giai đoạn 2 (mọi bảng có `coach_id`, RLS theo coach). Phần cần làm thêm khi tới lúc: đăng ký coach mới, trang công khai theo từng coach (địa chỉ hoặc tên miền), chọn đội khi một người thuộc nhiều đội, trang quản trị chung của NexusZone.
+
 ## Lộ trình
 
 Giao diện bám bộ mẫu 20 màn (đặc tả mục 4 và 5).
@@ -79,14 +86,17 @@ Giao diện bám bộ mẫu 20 màn (đặc tả mục 4 và 5).
 | 1 | Trang công khai (Giới thiệu, Khoá học, Video, Lịch & sân, Bài viết, Đánh giá), form nhu cầu 3 bước, đăng nhập, Tổng quan, Nhu cầu & chốt khoá | Xong |
 | 2 | Khoá học & lớp, Lịch dạy, buổi học (điểm danh, nhận xét), Học viên | Xong |
 | 3 | Thu chi, offer + VietQR, Thống kê | Xong |
-| 4 | Cài đặt (9 mục), quản lý Nội dung, mời thành viên | Xong |
+| 4 | Cài đặt, quản lý Nội dung, mời thành viên | Xong |
+| 5 | Menu có mục con, Đội ngũ, nhiều vai trò, chia tiền theo buổi, chốt tháng, chi trả, các quỹ, trợ giảng, báo cáo lãi / lỗ | Xong |
+| 6 | Bảng giá sân theo khung giờ, Thanh toán mới, hồ sơ có ảnh tải lên và giới thiệu có định dạng | Xong |
+| — | Giai đoạn 2: nhiều coach (xem Định hướng) | Chưa làm |
 
 ### Chưa làm (cần thêm dịch vụ hoặc tài khoản học viên)
 
 - Gửi email / Zalo tự động (nhắc lịch, chúc sinh nhật, báo nhu cầu mới): Cài đặt › Thông báo và Mẫu tin nhắn mới lưu lựa chọn; mẫu tin có nút sao chép để dán sang Zalo.
 - Học viên đăng nhập xem lịch, nhận xét, video riêng; quét QR điểm danh.
 - Đối soát chuyển khoản tự động với ngân hàng.
-- Quyền theo vai trò và chia nhu cầu xoay vòng mới được ghi nhận, chưa chặn / chia tự động.
+- Chia nhu cầu xoay vòng cho sale mới được ghi nhận, chưa chia tự động.
 
 ## Menu khu quản lý
 

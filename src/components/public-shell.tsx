@@ -3,6 +3,7 @@ import { Avatar } from "@/components/avatar";
 import { zaloHref } from "@/components/contact-links";
 import { Icon } from "@/components/icon";
 import { PublicTabs, StickyCta } from "@/components/public-nav";
+import { ACADEMY } from "@/lib/brand";
 import { ageFromBirthYear, statText } from "@/lib/format";
 import type { Coach } from "@/lib/types";
 
@@ -96,8 +97,11 @@ export function PublicShell({
           {children}
         </main>
       </div>
-      <footer className="hide-m mx-auto max-w-[1200px] px-8 pb-8 text-[13px] text-faint">
-        © {new Date().getFullYear()} {coach.display_name} · Pickleball cho người mới và người muốn nâng trình
+      <footer className="mx-auto flex max-w-[1200px] flex-col items-center gap-1 px-4 pb-28 text-center text-[13px] text-faint md:flex-row md:justify-between md:px-8 md:pb-8 md:text-left">
+        <span>© {new Date().getFullYear()} {coach.display_name} · Pickleball cho người mới và người muốn nâng trình</span>
+        <span>
+          {ACADEMY.note} <b className="font-semibold text-muted">{ACADEMY.name}</b>
+        </span>
       </footer>
       <StickyCta zalo={zalo} />
     </div>
