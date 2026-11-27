@@ -1,6 +1,6 @@
-# Coach Trung Muối
+# Coach Manager
 
-Web của Coach Trung Muối: giới thiệu, khoá học, kho video, lịch & sân, form nhu cầu học và trang quản lý nhu cầu.
+Nền tảng web cho huấn luyện viên pickleball: mỗi coach có trang giới thiệu, khoá học, kho video, lịch & sân, form nhu cầu học và khu quản lý (học viên, lớp, buổi dạy, thu chi). Nhiều coach dùng chung một bản (mọi bảng có `coach_id`), mỗi coach một tên miền riêng. Coach đầu tiên: **Coach Trung Muối** (mã `trung-muoi`).
 
 ## Chạy trên máy
 
@@ -54,7 +54,7 @@ Chạy theo thứ tự, mỗi file một lần. Nếu Supabase hiện cảnh bá
 ### Cấu hình Supabase Auth
 
 - **Authentication → Sign In / Providers → Email**: giữ bật **Confirm email**. Lời mời vào đội chỉ được nhận khi email đã xác nhận.
-- **Authentication → URL Configuration → Site URL**: đặt bằng địa chỉ web thật (ví dụ `https://coach-trung-muoi.vercel.app`) và thêm `https://coach-trung-muoi.vercel.app/**` vào Redirect URLs, để link trong thư xác nhận mở đúng trang.
+- **Authentication → URL Configuration → Site URL**: đặt bằng địa chỉ web thật (ví dụ `https://coach-manager.vercel.app`) và thêm `https://coach-manager.vercel.app/**` vào Redirect URLs (cùng tên miền riêng của từng coach nếu có), để link trong thư xác nhận mở đúng trang.
 
 ### Tạo tài khoản đăng nhập khu quản lý
 
