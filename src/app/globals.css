@@ -2,7 +2,7 @@
 @import "@fontsource-variable/inter";
 @import "@fontsource-variable/plus-jakarta-sans";
 
-/* Hệ giao diện Coach Trung Muối — theo bộ mẫu 16/11/2026. Chỉ giao diện sáng. */
+/* Hệ giao diện Coach Manager (coach đầu tiên: Coach Trung Muối) — theo bộ mẫu 16/11/2026. Chỉ giao diện sáng. */
 @theme {
   --font-sans: "Inter Variable", ui-sans-serif, system-ui, "Segoe UI", sans-serif;
 
